@@ -2,437 +2,497 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Simulador de Auditoría - BPFA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Mejoras para dispositivos móviles */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         .hotspot-marker {
             transform: translate(-50%, -50%);
             animation: pulse 2s infinite;
         }
+        
         @keyframes pulse {
             0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
             50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
             100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
         }
+        
+        .help-highlight {
+            animation: highlight 1s ease-in-out 3;
+            box-shadow: 0 0 0 3px #fbbf24, 0 0 0 6px rgba(251, 191, 36, 0.5);
+            border-radius: 50%;
+        }
+        
+        @keyframes highlight {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.5; }
+        }
+        
+        /* Estilos responsive */
+        @media (max-width: 768px) {
+            .hotspot-marker {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .hotspot-marker span {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 14px !important;
+            }
+            
+            textarea {
+                font-size: 14px !important;
+            }
+            
+            button {
+                min-height: 48px;
+            }
+            
+            #questions-container {
+                max-height: 280px !important;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .grid-cols-1.lg\:grid-cols-3 {
+                gap: 1rem !important;
+            }
+            
+            .p-4 {
+                padding: 0.75rem !important;
+            }
+            
+            .p-5 {
+                padding: 1rem !important;
+            }
+            
+            h3 {
+                font-size: 0.9rem !important;
+            }
+        }
+        
+        /* Mejora táctil para móviles */
+        .cursor-crosshair {
+            cursor: crosshair;
+        }
+        
+        @media (max-width: 768px) {
+            .cursor-crosshair {
+                cursor: pointer;
+            }
+        }
+        
+        /* Animación de carga */
         .image-loading {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 400px;
+            min-height: 300px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
-            flex-direction: column;
-            gap: 10px;
+        }
+        
+        /* Scroll suave */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
 
-    <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-bold tracking-wide text-amber-400">PLATAER INTERACTIVA BPFA</h1>
-            <p class="text-xs text-gray-300">Módulo de Inspección de Instalaciones, Equipos y Materiales</p>
+    <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
+        <div class="text-center md:text-left">
+            <h1 class="text-lg md:text-xl font-bold tracking-wide text-amber-400">PLATAER INTERACTIVA BPFA</h1>
+            <p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p>
         </div>
-        <div class="bg-slate-700 px-4 py-2 rounded-lg border border-slate-600">
-            <span class="text-sm font-semibold">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span>
+        <div class="flex gap-3 items-center">
+            <div class="bg-slate-700 px-3 py-1 md:py-2 rounded-lg border border-slate-600 text-center">
+                <span class="text-xs text-gray-300">🎯 Ayudas</span>
+                <span id="help-counter" class="text-amber-400 font-bold text-lg md:text-xl block leading-tight">3</span>
+            </div>
+            <div class="bg-slate-700 px-3 py-1 md:py-2 rounded-lg border border-slate-600">
+                <span class="text-xs md:text-sm font-semibold">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span>
+            </div>
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         
+        <!-- Columna de la imagen (más grande en móviles) -->
         <div class="lg:col-span-2 flex flex-col justify-between">
             <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 relative">
-                <div class="bg-gray-200 px-4 py-2 flex justify-between items-center border-b border-gray-300">
-                    <span class="font-bold text-gray-700 uppercase tracking-wider text-sm" id="scene-title">Estación de Inspección</span>
-                    <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded">Examen Activo</span>
+                <div class="bg-gray-200 px-3 md:px-4 py-2 flex flex-col sm:flex-row justify-between items-center gap-2 border-b border-gray-300">
+                    <span class="font-bold text-gray-700 uppercase tracking-wider text-xs md:text-sm" id="scene-title">Estación de Inspección</span>
+                    <div class="flex gap-2">
+                        <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">Examen Activo</span>
+                        <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1 rounded transition-all duration-200 whitespace-nowrap">
+                            💡 Ayuda
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="relative w-full cursor-crosshair select-none" id="image-container">
-                    <img id="scene-image" src="" alt="Escena de Auditoría" class="w-full h-auto block object-cover">
+                    <img id="scene-image" src="" alt="Escena de Auditoría" class="w-full h-auto block object-cover" loading="lazy">
                     <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
                 </div>
                 
-                <div class="p-3 bg-gray-50 text-xs text-gray-500 text-center italic border-t border-gray-200">
-                    Haz clic sobre las áreas de la imagen donde identifiques anomalías o fallas directas contra la norma BPFA.
+                <div class="p-2 md:p-3 bg-gray-50 text-xs text-gray-500 text-center italic border-t border-gray-200">
+                    📱 Toca o haz clic en las áreas donde identifiques anomalías
                 </div>
             </div>
         </div>
 
+        <!-- Columna de hallazgos -->
         <div class="flex flex-col gap-4">
-            
-            <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-200 flex flex-col gap-4">
-                <h3 class="font-bold text-gray-800 border-b pb-2 text-md flex items-center gap-2">
+            <div class="bg-white p-4 md:p-5 rounded-xl shadow-lg border border-gray-200">
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm md:text-md flex items-center gap-2">
                     📋 Criterio de Estación
                 </h3>
-                <p class="text-sm text-gray-600 leading-relaxed">
-                    Analiza detenidamente el entorno visual. Si consideras que esta zona de la bodega cumple por completo con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.
+                <p class="text-xs md:text-sm text-gray-600 leading-relaxed mt-2">
+                    Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.
                 </p>
                 
-                <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm">
-                    ✅ Marcar Escena como Conforme / Sin Novedades
+                <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm md:text-base mt-3">
+                    ✅ Marcar como Conforme
                 </button>
             </div>
 
-            <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-200 flex-1 flex flex-col">
-                <h3 class="font-bold text-gray-800 border-b pb-2 text-md flex items-center justify-between">
+            <div class="bg-white p-4 md:p-5 rounded-xl shadow-lg border border-gray-200 flex-1 flex flex-col">
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm md:text-md flex items-center justify-between">
                     <span>🔍 Hallazgos Detectados</span>
                     <span id="findings-counter" class="text-xs bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full font-mono">0 hallazgos</span>
                 </h3>
                 
-                <div id="questions-container" class="space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1 text-sm text-gray-500 italic flex flex-col justify-center items-center text-center">
-                    <div id="empty-state">
-                        <p class="font-medium text-gray-400">No has marcado ninguna falla en la imagen todavía.</p>
-                        <p class="text-xs text-gray-400 mt-1">Si la escena posee fallas, haz clic directo en ellas para argumentar.</p>
+                <div id="questions-container" class="space-y-3 mt-3 flex-1 overflow-y-auto max-h-[280px] md:max-h-[380px] pr-1 text-xs md:text-sm">
+                    <div id="empty-state" class="text-center py-8 md:py-10 text-gray-400">
+                        <p class="font-medium">No has marcado ninguna falla</p>
+                        <p class="text-xs mt-1">Toca directamente en la imagen donde veas anomalías</p>
                     </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-gray-100">
+                <div class="mt-3 pt-3 border-t border-gray-100">
                     <button id="btn-next" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl transition duration-200 hidden">
                         Siguiente Escena ➡️
                     </button>
                     <button id="btn-finish" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 px-4 rounded-xl transition duration-200 hidden">
-                        💾 Finalizar Auditoría y Generar Reporte
+                        💾 Finalizar Auditoría
                     </button>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <!-- Modal de Reporte -->
+    <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 md:p-4 hidden">
         <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            <div class="bg-slate-800 text-white p-5 rounded-t-2xl flex justify-between items-center">
+            <div class="bg-slate-800 text-white p-4 md:p-5 rounded-t-2xl flex justify-between items-center sticky top-0">
                 <div>
-                    <h2 class="text-xl font-bold text-amber-400">REPORTE CONSOLIDADO DE AUDITORÍA</h2>
-                    <p class="text-xs text-gray-300">Resultados de la Evaluación de Buenas Prácticas de Fabricación</p>
+                    <h2 class="text-lg md:text-xl font-bold text-amber-400">REPORTE DE AUDITORÍA</h2>
+                    <p class="text-xs text-gray-300">Resultados de la Evaluación</p>
                 </div>
-                <button onclick="closeModal()" class="text-white hover:text-amber-400 text-2xl">&times;</button>
+                <button onclick="closeModal()" class="text-white hover:text-amber-400 text-2xl leading-none">&times;</button>
             </div>
-            <div class="p-6 space-y-6 overflow-y-auto flex-1" id="report-content">
-                </div>
-            <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
-                <button onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-xl font-bold text-sm shadow transition">
-                    Cerrar
-                </button>
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-bold text-sm shadow transition">
-                    🖨️ Imprimir o Guardar PDF
-                </button>
+            <div class="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1" id="report-content"></div>
+            <div class="p-3 md:p-4 bg-gray-50 border-t flex justify-end gap-2 md:gap-3 sticky bottom-0">
+                <button onclick="closeModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">Cerrar</button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">🖨️ Guardar PDF</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Banco de Datos Maestro con tus imágenes
+        // DATASET CON RADIO DE DETECCIÓN MÁS HOLGADO (r: 15-20)
         const dataset = {
-            1: {
-                title: "Escena 1: Muelle de Ingreso",
-                isClean: true,
-                image: "assets/escena1.png",
-                hotspots: []
-            },
-            2: {
-                title: "Escena 2: Pasillos de Almacenamiento A",
-                isClean: false,
-                image: "assets/escena2.png",
-                hotspots: [
-                    { id: "e2_p1", x: 23, y: 72, r: 8, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
-                    { id: "e2_p2", x: 80, y: 64, r: 8, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
-                    { id: "e2_p3", x: 18, y: 55, r: 8, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
-                ]
-            },
-            3: {
-                title: "Escena 3: Estanterías de Almacenamiento Especial",
-                isClean: false,
-                image: "assets/escena3.png",
-                hotspots: [
-                    { id: "e3_p1", x: 30, y: 18, r: 8, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
-                    { id: "e3_p2", x: 62, y: 32, r: 8, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
-                ]
-            },
-            4: {
-                title: "Escena 4: Área de Dosificación y Pesaje",
-                isClean: true,
-                image: "assets/escena4.png",
-                hotspots: []
-            },
-            5: {
-                title: "Escena 5: Infraestructura Alta (Techado)",
-                isClean: false,
-                image: "assets/escena5.png",
-                hotspots: [
-                    { id: "e5_p1", x: 20, y: 15, r: 8, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                    { id: "e5_p2", x: 74, y: 16, r: 8, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
-                ]
-            },
-            6: {
-                title: "Escena 6: Zona de Control de Desperdicios",
-                isClean: false,
-                image: "assets/escena6.png",
-                hotspots: [
-                    { id: "e6_p1", x: 45, y: 55, r: 8, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
-                    { id: "e6_p2", x: 70, y: 68, r: 8, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
-                ]
-            },
-            7: {
-                title: "Escena 7: Área de Despacho Perimetral",
-                isClean: false,
-                image: "assets/escena7.png",
-                hotspots: [
-                    { id: "e7_p1", x: 45, y: 25, r: 8, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
-                    { id: "e7_p2", x: 12, y: 68, r: 8, label: "Luz inferior en estructura de puerta", q: "En la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
-                    { id: "e7_p3", x: 14, y: 84, r: 8, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
-                ]
-            }
+            1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
+            2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
+                { id: "e2_p1", x: 23, y: 72, r: 18, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento al ser arrumados sobre un suelo con manchas de humedad?" },
+                { id: "e2_p2", x: 80, y: 64, r: 18, label: "Estiba Dañada", q: "¿Por qué es peligroso mantener estibas rotas o astilladas en los pasillos de almacenamiento?" },
+                { id: "e2_p3", x: 18, y: 55, r: 18, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes?" }
+            ] },
+            3: { title: "Escena 3: Estanterías", isClean: false, image: "assets/escena3.png", hotspots: [
+                { id: "e3_p1", x: 30, y: 18, r: 18, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar alimento medicado sobre alimentos comerciales es un error grave." },
+                { id: "e3_p2", x: 62, y: 32, r: 18, label: "Derrame de polvillo medicado", q: "¿Qué consecuencias trae el polvo de medicamento derramado sobre los sacos inferiores?" }
+            ] },
+            4: { title: "Escena 4: Área de Dosificación", isClean: true, image: "assets/escena4.png", hotspots: [] },
+            5: { title: "Escena 5: Infraestructura (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
+                { id: "e5_p1", x: 20, y: 15, r: 18, label: "Gotera activa", q: "¿Por qué una gotera activa compromete la calidad de la planta?" },
+                { id: "e5_p2", x: 74, y: 16, r: 18, label: "Luminaria expuesta", q: "¿Qué peligro físico corren los alimentos si las lámparas no tienen protector?" }
+            ] },
+            6: { title: "Escena 6: Control de Desperdicios", isClean: false, image: "assets/escena6.png", hotspots: [
+                { id: "e6_p1", x: 45, y: 55, r: 18, label: "Saco roto y derrame", q: "¿Qué problemas de bioseguridad acarrea el alimento esparcido en el suelo?" },
+                { id: "e6_p2", x: 70, y: 68, r: 18, label: "Herramientas en el suelo", q: "¿Cuál es el error de dejar escobas y traperos tirados en el piso?" }
+            ] },
+            7: { title: "Escena 7: Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
+                { id: "e7_p1", x: 45, y: 25, r: 18, label: "Portón abierto", q: "¿Qué norma se incumple al abrir la puerta hacia un patio con maleza?" },
+                { id: "e7_p2", x: 12, y: 68, r: 18, label: "Falta de hermeticidad", q: "¿Por qué es una falla grave el espacio libre bajo la puerta?" },
+                { id: "e7_p3", x: 14, y: 84, r: 18, label: "Trampa de plagas rota", q: "¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+            ] }
         };
 
         let currentSceneId = 1;
-        const studentAnswers = {}; 
+        let availableHelps = 3;
+        const studentAnswers = {};
 
-        // Elementos del DOM
-        const imgContainer = document.getElementById("image-container");
+        // Elementos DOM
         const sceneImage = document.getElementById("scene-image");
-        const pinsOverlay = document.getElementById("pins-overlay");
         const sceneTitle = document.getElementById("scene-title");
         const progressText = document.getElementById("progress-text");
+        const pinsOverlay = document.getElementById("pins-overlay");
         const questionsContainer = document.getElementById("questions-container");
         const findingsCounter = document.getElementById("findings-counter");
         const btnConforme = document.getElementById("btn-conforme");
         const btnNext = document.getElementById("btn-next");
         const btnFinish = document.getElementById("btn-finish");
+        const btnHelp = document.getElementById("btn-help");
+        const helpCounter = document.getElementById("help-counter");
+        const imgContainer = document.getElementById("image-container");
 
-        // Inicializar Escena
+        function updateHelpCounter() {
+            helpCounter.textContent = availableHelps;
+            if (availableHelps === 0) {
+                btnHelp.disabled = true;
+                btnHelp.classList.add("opacity-50", "cursor-not-allowed");
+                btnHelp.textContent = "💔 Sin Ayudas";
+            } else {
+                btnHelp.disabled = false;
+                btnHelp.classList.remove("opacity-50", "cursor-not-allowed");
+                btnHelp.textContent = "💡 Ayuda";
+            }
+        }
+
+        function revealNextMissingHotspot() {
+            if (availableHelps <= 0) {
+                alert("❌ No te quedan ayudas. ¡Agudiza tu observación!");
+                return null;
+            }
+
+            const scene = dataset[currentSceneId];
+            if (scene.isClean) {
+                alert("✅ Esta escena no tiene fallas. ¡Continúa!");
+                return null;
+            }
+
+            const currentFindings = studentAnswers[currentSceneId]?.findings || {};
+            const missingHotspots = scene.hotspots.filter(spot => !currentFindings[spot.id]);
+            
+            if (missingHotspots.length === 0) {
+                alert("🎉 ¡Ya encontraste todas las fallas!");
+                return null;
+            }
+
+            const spotToReveal = missingHotspots[0];
+            
+            // Efecto visual
+            const helpPin = document.createElement("div");
+            helpPin.id = `help_pin_${spotToReveal.id}`;
+            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full flex items-center justify-center pointer-events-none z-40";
+            helpPin.style.left = `${spotToReveal.x}%`;
+            helpPin.style.top = `${spotToReveal.y}%`;
+            helpPin.style.width = "44px";
+            helpPin.style.height = "44px";
+            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white text-white font-bold text-sm animate-pulse">?</span>`;
+            pinsOverlay.appendChild(helpPin);
+            
+            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spotToReveal.label}\n\n🔍 Busca en el área indicada.`);
+            
+            setTimeout(() => {
+                if (helpPin) helpPin.remove();
+            }, 4000);
+            
+            availableHelps--;
+            updateHelpCounter();
+            
+            return spotToReveal;
+        }
+
+        btnHelp.addEventListener("click", function() {
+            if (availableHelps <= 0) {
+                alert("❌ No quedan ayudas disponibles.");
+                return;
+            }
+            
+            if (studentAnswers[currentSceneId]?.markedConforme) {
+                alert("⚠️ Ya marcaste esta escena como conforme.");
+                return;
+            }
+            
+            revealNextMissingHotspot();
+        });
+
         function loadScene(id) {
             currentSceneId = id;
             const scene = dataset[id];
             
-            // Actualizar Interfaz Base
             sceneImage.src = scene.image;
             sceneTitle.textContent = scene.title;
             progressText.textContent = `Escena ${id} de 7`;
             
-            // Limpiar estados previos
             pinsOverlay.innerHTML = "";
-            questionsContainer.innerHTML = "";
-            questionsContainer.className = "space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1";
-            
-            // Restablecer Empty State Homogéneo
-            const emptyStateHTML = `
-                <div id="empty-state" class="text-center py-10 text-gray-400">
-                    <p class="font-medium">No has marcado ninguna falla en la imagen todavía.</p>
-                    <p class="text-xs mt-1">Si la escena posee fallas, haz clic directo en ellas para argumentar.</p>
-                </div>`;
-            questionsContainer.innerHTML = emptyStateHTML;
+            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 md:py-10 text-gray-400"><p class="font-medium">No has marcado ninguna falla</p><p class="text-xs mt-1">Toca directamente en la imagen donde veas anomalías</p></div>`;
             findingsCounter.textContent = "0 hallazgos";
             
-            // Resetear botones y estilos conformes
-            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm";
-            btnConforme.textContent = "✅ Marcar Escena como Conforme / Sin Novedades";
             btnConforme.disabled = false;
             btnConforme.classList.remove("opacity-40", "cursor-not-allowed");
+            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm md:text-base";
+            btnConforme.textContent = "✅ Marcar como Conforme";
+            
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
 
-            // Inicializar estructura de respuestas para la escena si no existe
             if (!studentAnswers[id]) {
-                studentAnswers[id] = {
-                    markedConforme: false,
-                    findings: {}
-                };
+                studentAnswers[id] = { markedConforme: false, findings: {} };
+            }
+            
+            // Recargar hallazgos existentes
+            const existingFindings = studentAnswers[id].findings;
+            if (Object.keys(existingFindings).length > 0) {
+                const emptyState = document.getElementById("empty-state");
+                if (emptyState) emptyState.remove();
+                
+                scene.hotspots.forEach(spot => {
+                    if (existingFindings[spot.id]) {
+                        const pin = document.createElement("div");
+                        pin.id = `pin_${spot.id}`;
+                        pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none";
+                        pin.style.left = `${spot.x}%`;
+                        pin.style.top = `${spot.y}%`;
+                        pin.style.width = "34px";
+                        pin.style.height = "34px";
+                        pin.innerHTML = `<span class="bg-red-700 w-6 h-6 rounded-full flex items-center justify-center border border-white text-white font-bold text-xs">!</span>`;
+                        pinsOverlay.appendChild(pin);
+                        
+                        const questionBox = document.createElement("div");
+                        questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 shadow-sm";
+                        questionBox.innerHTML = `<label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 ${spot.label}</label><p class="text-xs text-gray-700 font-medium mb-2">${spot.q}</p><textarea id="input_${spot.id}" rows="2" placeholder="Escribe tu justificación..." class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 bg-white">${existingFindings[spot.id]}</textarea>`;
+                        questionsContainer.appendChild(questionBox);
+                        
+                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() {
+                            studentAnswers[currentSceneId].findings[spot.id] = this.value;
+                        });
+                    }
+                });
+                
+                const foundCount = Object.keys(existingFindings).length;
+                findingsCounter.textContent = `${foundCount} de ${scene.hotspots.length} fallas`;
+                if (foundCount === scene.hotspots.length) showNavigationButtons();
             }
         }
 
-        // Manejador de clics adaptativo en el contenedor de imagen
+        // Detección de clics/taps con área más holgada
         imgContainer.addEventListener("click", function(e) {
             const scene = dataset[currentSceneId];
-            if (studentAnswers[currentSceneId].markedConforme) return; 
+            if (studentAnswers[currentSceneId].markedConforme) return;
             
-            // Calcular porcentajes relativos
             const rect = imgContainer.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
 
-            // Verificar impacto en el Hotspot
             let hit = null;
             for (let spot of scene.hotspots) {
                 const distance = Math.sqrt(Math.pow(clickX - spot.x, 2) + Math.pow(clickY - spot.y, 2));
-                if (distance <= spot.r) {
-                    hit = spot;
-                    break;
+                if (distance <= spot.r) { 
+                    hit = spot; 
+                    break; 
                 }
             }
 
-            if (hit) {
-                // Bloquear el botón Conforme
-                btnConforme.classList.add("opacity-40", "cursor-not-allowed");
+            if (hit && !document.getElementById(`pin_${hit.id}`)) {
                 btnConforme.disabled = true;
+                btnConforme.classList.add("opacity-40", "cursor-not-allowed");
                 
-                // Evitar pines duplicados
-                if (document.getElementById(`pin_${hit.id}`)) return;
-
-                // Remover el empty state
                 const emptyState = document.getElementById("empty-state");
                 if (emptyState) emptyState.remove();
 
-                // 1. Inyectar Pin Indicador
                 const pin = document.createElement("div");
                 pin.id = `pin_${hit.id}`;
-                pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none shadow-lg shadow-red-600/30 text-white font-bold text-xs";
+                pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none";
                 pin.style.left = `${hit.x}%`;
                 pin.style.top = `${hit.y}%`;
-                pin.style.width = "30px";
-                pin.style.height = "30px";
-                pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center border border-white">!</span>`;
+                pin.style.width = "34px";
+                pin.style.height = "34px";
+                pin.innerHTML = `<span class="bg-red-700 w-6 h-6 rounded-full flex items-center justify-center border border-white text-white font-bold text-xs">!</span>`;
                 pinsOverlay.appendChild(pin);
 
-                // 2. Crear Caja de Argumentación
                 const questionBox = document.createElement("div");
                 questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 shadow-sm";
-                questionBox.innerHTML = `
-                    <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 Hallazgo: ${hit.label}</label>
-                    <p class="text-xs text-gray-700 font-medium mb-2">${hit.q}</p>
-                    <textarea 
-                        id="input_${hit.id}" 
-                        rows="2" 
-                        placeholder="Escribe tu justificación normativa aquí..." 
-                        class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white"
-                    ></textarea>
-                `;
+                questionBox.innerHTML = `<label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 ${hit.label}</label><p class="text-xs text-gray-700 font-medium mb-2">${hit.q}</p><textarea id="input_${hit.id}" rows="2" placeholder="Escribe tu justificación..." class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 bg-white"></textarea>`;
                 questionsContainer.appendChild(questionBox);
 
-                // Guardado dinámico de la respuesta
-                const textarea = document.getElementById(`input_${hit.id}`);
-                textarea.addEventListener("input", function() {
-                    studentAnswers[currentSceneId].findings[hit.id] = textarea.value;
+                document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
+                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
+                    const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                    findingsCounter.textContent = `${currentCount} de ${scene.hotspots.length} fallas`;
+                    if (currentCount === scene.hotspots.length) showNavigationButtons();
                 });
 
-                // Actualizar contador visual
-                const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                const totalTarget = scene.hotspots.length;
-                findingsCounter.textContent = `${currentCount} de ${totalTarget} fallas`;
-
-                // Validar si descubrió todas las fallas
-                if (Object.keys(studentAnswers[currentSceneId].findings).length === totalTarget) {
-                    showNavigationButtons();
+                const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length + 1;
+                findingsCounter.textContent = `${currentCount} de ${scene.hotspots.length} fallas`;
+                if (currentCount === scene.hotspots.length) showNavigationButtons();
+                
+                // Feedback háptico suave en móviles
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(50);
                 }
             }
         });
 
-        // Evento Botón Conforme
         btnConforme.addEventListener("click", function() {
             studentAnswers[currentSceneId].markedConforme = true;
-            
-            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm text-center";
-            btnConforme.textContent = "🔒 Registrado como Conforme";
             btnConforme.disabled = true;
-
+            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm md:text-base text-center";
+            btnConforme.textContent = "🔒 Registrado como Conforme";
+            
             const emptyState = document.getElementById("empty-state");
             if (emptyState) emptyState.remove();
-
-            questionsContainer.className = "space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1 flex flex-col justify-center items-center text-center text-emerald-600 font-semibold";
-            questionsContainer.innerHTML = `
-                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full shadow-sm">
-                    <p class="text-sm">Has validado esta área como libre de anomalías.</p>
-                    <p class="text-xs font-normal text-gray-500 mt-1">Decisión registrada en la planilla de control.</p>
-                </div>
-            `;
-
+            
+            questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full text-center"><p class="text-sm text-emerald-700 font-semibold">✅ Área validada como libre de anomalías</p></div>`;
             showNavigationButtons();
         });
 
-        // Control de visibilidad de navegación
         function showNavigationButtons() {
-            if (currentSceneId < 7) {
-                btnNext.classList.remove("hidden");
-            } else {
-                btnFinish.classList.remove("hidden");
-            }
+            if (currentSceneId < 7) btnNext.classList.remove("hidden");
+            else btnFinish.classList.remove("hidden");
         }
 
-        // Cambio de Escena
-        btnNext.addEventListener("click", function() {
-            if (currentSceneId < 7) {
-                loadScene(currentSceneId + 1);
-            }
-        });
-
-        // Finalización del Examen
+        btnNext.addEventListener("click", () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); });
+        
         btnFinish.addEventListener("click", function() {
-            const modal = document.getElementById("report-modal");
-            const content = document.getElementById("report-content");
+            let html = `<div class="bg-amber-50 p-3 md:p-4 rounded-xl mb-4 text-sm"><strong>📊 Ayudas utilizadas:</strong> ${3 - availableHelps} de 3</div>
+                        <div class="bg-blue-50 p-3 md:p-4 rounded-xl mb-4 text-sm"><strong>📋 Instrucciones:</strong> Evalúa las respuestas según criterios BPFA</div>
+                        <div class="overflow-x-auto"><table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead><tr class="bg-slate-100"><th class="p-2 md:p-3">Escenario</th><th class="p-2 md:p-3">Criterio</th><th class="p-2 md:p-3">Argumentación</th></tr></thead><tbody>`;
             
-            let htmlReport = `
-                <div class="bg-amber-50 border border-amber-300 p-4 rounded-xl text-sm text-amber-900 mb-4">
-                    <strong>📋 Instrucciones de Calificación:</strong> Evalúa las respuestas abiertas del estudiante en base a los criterios de los documentos técnicos oficiales de la planta.
-                </div>
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider border-b border-gray-300">
-                            <th class="p-3 font-bold">Escenario</th>
-                            <th class="p-3 font-bold">Criterio Alumno</th>
-                            <th class="p-3 font-bold">Argumentación del Estudiante</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-            `;
-
             for (let id = 1; id <= 7; id++) {
-                const scene = dataset[id];
-                const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
+                const scene = dataset[id], ans = studentAnswers[id] || { markedConforme: false, findings: {} };
+                html += `<tr class="border-b"><td class="p-2 md:p-3 font-medium">${scene.title}</td><td class="p-2 md:p-3"><span class="${ans.markedConforme ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</span></td><td class="p-2 md:p-3">`;
                 
-                let criteriaStyle = ans.markedConforme ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold';
-                let criteriaText = ans.markedConforme ? '✅ Marcó Conforme' : '⚠️ Reportó Fallas';
-
-                htmlReport += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-medium text-gray-900 align-top">${scene.title}</td>
-                        <td class="p-3 align-top"><span class="${criteriaStyle}">${criteriaText}</span></td>
-                        <td class="p-3 space-y-3 align-top">
-                `;
-
                 if (scene.isClean) {
-                    if (ans.markedConforme) {
-                        htmlReport += `<p class="text-emerald-600 font-medium">✨ Correcto: Validó que la zona cumple con los estándares.</p>`;
-                    } else {
-                        htmlReport += `<p class="text-rose-600 font-medium">⚠️ Error: Buscó fallas en un área que cumple la norma.</p>`;
-                    }
+                    html += ans.markedConforme ? '<span class="text-emerald-600">✨ Correcto</span>' : '<span class="text-rose-600">❌ Error: Reportó fallas donde no existen</span>';
                 } else {
-                    if (ans.markedConforme) {
-                        htmlReport += `<p class="text-rose-600 font-medium">❌ Error Grave: Aprobó un área con fallas críticas.</p>`;
-                    } else {
-                        scene.hotspots.forEach(spot => {
-                            const studentText = ans.findings[spot.id] || '<span class="text-rose-500 italic">⚠️ No detectado</span>';
-                            htmlReport += `
-                                <div class="bg-gray-50 p-2 rounded border border-gray-200">
-                                    <strong class="text-slate-700 block">📍 ${spot.label}</strong>
-                                    <p class="text-gray-600 italic mt-0.5">"${studentText}"</p>
-                                </div>
-                            `;
-                        });
-                    }
+                    if (ans.markedConforme) html += '<span class="text-rose-600">❌ Error: No detectó fallas críticas</span>';
+                    else scene.hotspots.forEach(spot => {
+                        html += `<div class="bg-gray-50 p-2 mb-2 rounded text-xs"><strong>📍 ${spot.label}</strong><br><span class="text-gray-600">${ans.findings[spot.id] || '⚠️ No respondido'}</span></div>`;
+                    });
                 }
-
-                htmlReport += `</td></tr>`;
+                html += `</td></tr>`;
             }
-
-            htmlReport += `</tbody></table>`;
-            content.innerHTML = htmlReport;
-            modal.classList.remove("hidden");
+            
+            html += `</tbody></table></div>`;
+            document.getElementById("report-content").innerHTML = html;
+            document.getElementById("report-modal").classList.remove("hidden");
         });
 
-        // Funciones del modal
-        window.closeModal = function() {
-            document.getElementById("report-modal").classList.add("hidden");
-        };
-
-        document.getElementById("report-modal").addEventListener("click", function(e) {
-            if (e.target === this) {
-                this.classList.add("hidden");
-            }
-        });
-
-        // Carga inicial
+        window.closeModal = () => document.getElementById("report-modal").classList.add("hidden");
+        document.getElementById("report-modal").addEventListener("click", (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden"); });
+        
+        updateHelpCounter();
         loadScene(1);
     </script>
 </body>
