@@ -109,7 +109,7 @@
     </div>
 
     <script>
-        // Banco de Datos Maestro con Tolerancia Geográfica (Hotspots) de Clics
+        // Banco de Datos Maestro con Nombres en Minúsculas y Coordenadas Calibradas
         const dataset = {
             1: {
                 title: "Escena 1: Muelle de Ingreso",
@@ -122,9 +122,9 @@
                 isClean: false,
                 image: "assets/escena2.png",
                 hotspots: [
-                    { id: "e2_p1", x: 23, y: 72, r: 12, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
-                    { id: "e2_p2", x: 80, y: 64, r: 14, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
-                    { id: "e2_p3", x: 58, y: 22, r: 10, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+                    { id: "e2_p1", x: 23, y: 72, r: 8, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
+                    { id: "e2_p2", x: 80, y: 64, r: 8, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
+                    { id: "e2_p3", x: 18, y: 55, r: 8, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
                 ]
             },
             3: {
@@ -132,8 +132,8 @@
                 isClean: false,
                 image: "assets/escena3.png",
                 hotspots: [
-                    { id: "e3_p1", x: 30, y: 18, r: 15, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
-                    { id: "e3_p2", x: 62, y: 32, r: 12, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
+                    { id: "e3_p1", x: 30, y: 18, r: 8, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
+                    { id: "e3_p2", x: 62, y: 32, r: 8, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
                 ]
             },
             4: {
@@ -147,8 +147,8 @@
                 isClean: false,
                 image: "assets/escena5.png",
                 hotspots: [
-                    { id: "e5_p1", x: 20, y: 15, r: 12, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                    { id: "e5_p2", x: 74, y: 16, r: 15, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
+                    { id: "e5_p1", x: 20, y: 15, r: 8, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
+                    { id: "e5_p2", x: 74, y: 16, r: 8, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
                 ]
             },
             6: {
@@ -156,8 +156,8 @@
                 isClean: false,
                 image: "assets/escena6.png",
                 hotspots: [
-                    { id: "e6_p1", x: 45, y: 55, r: 16, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
-                    { id: "e6_p2", x: 70, y: 68, r: 14, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+                    { id: "e6_p1", x: 45, y: 55, r: 8, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
+                    { id: "e6_p2", x: 70, y: 68, r: 8, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
                 ]
             },
             7: {
@@ -165,9 +165,9 @@
                 isClean: false,
                 image: "assets/escena7.png",
                 hotspots: [
-                    { id: "e7_p1", x: 45, y: 25, r: 18, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
-                    { id: "e7_p2", x: 12, y: 68, r: 10, label: "Luz inferior en estructura de puerta", q: "In la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
-                    { id: "e7_p3", x: 14, y: 84, r: 10, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+                    { id: "e7_p1", x: 45, y: 25, r: 8, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
+                    { id: "e7_p2", x: 12, y: 68, r: 8, label: "Luz inferior en estructura de puerta", q: "En la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
+                    { id: "e7_p3", x: 14, y: 84, r: 8, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
                 ]
             }
         };
@@ -202,7 +202,7 @@
             questionsContainer.innerHTML = "";
             questionsContainer.className = "space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1";
             
-            // Reestablecer Empty State si es necesario
+            // Restablecer Empty State Homogéneo
             const emptyStateHTML = `
                 <div id="empty-state" class="text-center py-10 text-gray-400">
                     <p class="font-medium">No has marcado ninguna falla en la imagen todavía.</p>
@@ -211,8 +211,9 @@
             questionsContainer.innerHTML = emptyStateHTML;
             findingsCounter.textContent = "0 hallazgos";
             
-            // Resetear botones de navegación
+            // Resetear botones y estilos conformes
             btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm";
+            btnConforme.textContent = "✅ Marcar Escena como Conforme / Sin Novedades";
             btnConforme.disabled = false;
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
@@ -226,17 +227,17 @@
             }
         }
 
-        // Manejador de clics en el contenedor de imagen
+        // Manejador de clics adaptativo en el contenedor de imagen
         imgContainer.addEventListener("click", function(e) {
             const scene = dataset[currentSceneId];
-            if (studentAnswers[currentSceneId].markedConforme) return; // Bloquear si ya marcó conforme
+            if (studentAnswers[currentSceneId].markedConforme) return; 
 
-            // Calcular porcentajes relativos exactos de la imagen
+            // Calcular porcentajes relativos para evitar desajustes de resolución
             const rect = imgContainer.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
 
-            // Verificar si el clic golpeó algún hotspot configurado
+            // Verificar impacto en el Hotspot
             let hit = null;
             for (let spot of scene.hotspots) {
                 const distance = Math.sqrt(Math.pow(clickX - spot.x, 2) + Math.pow(clickY - spot.y, 2));
@@ -247,55 +248,58 @@
             }
 
             if (hit) {
-                // Si encontramos un error, desactivamos la posibilidad de marcar como conforme libre de fallas
+                // Bloquear el botón Conforme (pues ya se hallaron anomalías reales)
                 btnConforme.classList.add("opacity-40", "cursor-not-allowed");
                 btnConforme.disabled = true;
                 
-                // Si el hallazgo ya fue mapeado en pantalla, no duplicarlo
+                // Evitar pines duplicados en el mismo punto
                 if (document.getElementById(`pin_${hit.id}`)) return;
 
-                // Eliminar el "empty state" del contenedor de preguntas
+                // Remover el empty state
                 const emptyState = document.getElementById("empty-state");
                 if (emptyState) emptyState.remove();
 
-                // 1. Crear Pin Visual (Círculo rojo translúcido sobre el error)
+                // 1. Inyectar Pin Indicador sobre la falla
                 const pin = document.createElement("div");
                 pin.id = `pin_${hit.id}`;
                 pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none shadow-lg shadow-red-600/30 text-white font-bold text-xs";
                 pin.style.left = `${hit.x}%`;
                 pin.style.top = `${hit.y}%`;
-                pin.style.width = `${hit.r * 2}%`;
-                pin.style.height = `${(hit.r * 2) * (rect.height / rect.width)}%`; // Corrección de aspecto
+                pin.style.width = "30px";
+                pin.style.height = "30px";
                 pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center border border-white">!</span>`;
                 pinsOverlay.appendChild(pin);
 
-                // 2. Insertar Caja de Texto en el Panel de Formulario
+                // 2. Crear Caja de Argumentación Técnica a la Derecha
                 const questionBox = document.createElement("div");
-                questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 animate-fade-in";
+                questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 shadow-sm";
                 questionBox.innerHTML = `
-                    <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 Hallazgo Detectado:</label>
+                    <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 Hallazgo: ${hit.label}</label>
                     <p class="text-xs text-gray-700 font-medium mb-2">${hit.q}</p>
                     <textarea 
                         id="input_${hit.id}" 
                         rows="2" 
-                        placeholder="Escribe aquí tu justificación basada en lo aprendido..." 
+                        placeholder="Escribe tu justificación normativa aquí..." 
                         class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white"
                     ></textarea>
                 `;
                 questionsContainer.appendChild(questionBox);
 
-                // Escuchar cambios para guardar la respuesta en tiempo real
+                // Guardado dinámico de la respuesta del alumno
                 const textarea = document.getElementById(`input_${hit.id}`);
                 textarea.addEventListener("input", function() {
                     studentAnswers[currentSceneId].findings[hit.id] = textarea.value;
                 });
 
-                // Actualizar contador de hallazgos en pantalla
-                const currentCount = Object.keys(document.querySelectorAll("[id^='pin_']")).length;
-                findingsCounter.textContent = `${currentCount} hallazgo${currentCount > 1 ? 's' : ''}`;
+                // Actualizar contador visual
+                const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length || 1;
+                const totalTarget = scene.hotspots.length;
+                findingsCounter.textContent = `${currentCount} de ${totalTarget} fallas`;
 
-                // Mostrar botón de flujo de navegación
-                showNavigationButtons();
+                // Validar si el alumno descubrió todas las fallas para dejarlo avanzar
+                if (Object.keys(studentAnswers[currentSceneId].findings).length === totalTarget) {
+                    showNavigationButtons();
+                }
             }
         });
 
@@ -303,7 +307,6 @@
         btnConforme.addEventListener("click", function() {
             studentAnswers[currentSceneId].markedConforme = true;
             
-            // Cambiar aspecto para denotar bloqueo conforme exitoso
             btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm text-center";
             btnConforme.textContent = "🔒 Registrado como Conforme";
             btnConforme.disabled = true;
@@ -313,16 +316,16 @@
 
             questionsContainer.className = "space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1 flex flex-col justify-center items-center text-center text-emerald-600 font-semibold";
             questionsContainer.innerHTML = `
-                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full">
-                    <p class="text-sm">Has validado esta área como libre de anomalías operativos.</p>
-                    <p class="text-xs font-normal text-gray-500 mt-1">Tu decisión ha sido guardada en la planilla de auditoría.</p>
+                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full shadow-sm">
+                    <p class="text-sm">Has validado esta área como libre de anomalías.</p>
+                    <p class="text-xs font-normal text-gray-500 mt-1">Decisión registrada en la planilla de control.</p>
                 </div>
             `;
 
             showNavigationButtons();
         });
 
-        // Control de visibilidad de los botones de avance
+        // Control de visibilidad de navegación
         function showNavigationButtons() {
             if (currentSceneId < 7) {
                 btnNext.classList.remove("hidden");
@@ -331,28 +334,28 @@
             }
         }
 
-        // Navegación de Siguiente Escena
+        // Cambio de Escena
         btnNext.addEventListener("click", function() {
             if (currentSceneId < 7) {
                 loadScene(currentSceneId + 1);
             }
         });
 
-        // Finalización del Examen y Despliegue del Reporte
+        // Finalización del Examen y Despliegue del Reporte Técnico Compilado
         btnFinish.addEventListener("click", function() {
             const modal = document.getElementById("report-modal");
             const content = document.getElementById("report-content");
             
             let htmlReport = `
                 <div class="bg-amber-50 border border-amber-300 p-4 rounded-xl text-sm text-amber-900 mb-4">
-                    <strong>Instrucciones para el Evaluador:</strong> Revisa los argumentos ingresados por el estudiante frente a la solución esperada del módulo técnico para asignar la calificación final. Puedes guardar este reporte en formato PDF o mandarlo a impresión física.
+                    <strong>Instrucciones de Calificación:</strong> Evalúa las respuestas abiertas del estudiante en base a los criterios de los documentos técnicos oficiales de la planta (Instalaciones, Equipos y Materiales). Puedes imprimir este reporte o guardarlo como PDF.
                 </div>
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider border-b border-gray-300">
                             <th class="p-3 font-bold">Escenario</th>
                             <th class="p-3 font-bold">Criterio Alumno</th>
-                            <th class="p-3 font-bold">Argumentos Evaluados / Guía de Solución</th>
+                            <th class="p-3 font-bold">Argumentación del Estudiante / Hallazgos Reales</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -373,24 +376,21 @@
                 `;
 
                 if (scene.isClean) {
-                    // Escenas que debían marcarse conformes
                     if (ans.markedConforme) {
-                        htmlReport += `<p class="text-emerald-600 font-medium">✨ Correcto: El estudiante reconoció adecuadamente que el área cumple con los estándares higiénicos del módulo.</p>`;
+                        htmlReport += `<p class="text-emerald-600 font-medium">✨ Correcto: El estudiante validó acertadamente que la zona cumple al 100% con los estándares higiénico-sanitarios.</p>`;
                     } else {
-                        htmlReport += `<p class="text-rose-600 font-medium">⚠️ Desviación: El estudiante intentó buscar fallas en un área que cumple al 100% con las BPM.</p>`;
+                        htmlReport += `<p class="text-rose-600 font-medium">⚠️ Error de Falso Positivo: El estudiante intentó buscar fallas o inventar hallazgos en un área que cumple rigurosamente con la norma.</p>`;
                     }
                 } else {
-                    // Escenas que tenían errores configurados
                     if (ans.markedConforme) {
-                        htmlReport += `<p class="text-rose-600 font-medium">❌ Omisión Crítica: El alumno dio conformidad a un área que poseía infracciones estructurales u operativas.</p>`;
+                        htmlReport += `<p class="text-rose-600 font-medium">❌ Infracción de Omisión Grave: El alumno dio por aprobada un área de trabajo que poseía fallas estructurales u operativas críticas contra las BPFA.</p>`;
                     } else {
-                        // Desglosar cada hotspot de la escena con la respuesta del estudiante
                         scene.hotspots.forEach(spot => {
-                            const studentText = ans.findings[spot.id] || '<span class="text-rose-500 italic">No detectado / No respondido</span>';
+                            const studentText = ans.findings[spot.id] || '<span class="text-rose-500 italic font-medium">No detectado / Omitido en la inspección</span>';
                             htmlReport += `
-                                <div class="bg-gray-50 p-2 rounded border border-gray-200">
-                                    <strong class="text-slate-700 block">📍 Falla: ${spot.label}</strong>
-                                    <p class="text-gray-600 italic mt-0.5">"Respuesta dada: ${studentText}"</p>
+                                <div class="bg-gray-50 p-2 rounded border border-gray-200 shadow-sm">
+                                    <strong class="text-slate-700 block">📍 Anomalía: ${spot.label}</strong>
+                                    <p class="text-gray-600 italic mt-0.5">"Justificación: ${studentText}"</p>
                                 </div>
                             `;
                         });
@@ -405,7 +405,7 @@
             modal.classList.remove("hidden");
         });
 
-        // Arrancar la aplicación en la escena inicial
+        // Carga inicial automática de la primera escena al abrir
         window.onload = function() {
             loadScene(1);
         };
