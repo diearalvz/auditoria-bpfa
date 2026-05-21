@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Auditoría - BPFA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hotspot-marker {
+            transform: translate(-50%, -50%);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold tracking-wide text-amber-400">PLATAER INTERACTIVA BPFA</h1>
+            <p class="text-xs text-gray-300">Módulo de Inspección de Instalaciones, Equipos y Materiales</p>
+        </div>
+        <div class="bg-slate-700 px-4 py-2 rounded-lg border border-slate-600">
+            <span class="text-sm font-semibold">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div class="lg:col-span-2 flex flex-col justify-between">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 relative">
+                <div class="bg-gray-200 px-4 py-2 flex justify-between items-center border-b border-gray-300">
+                    <span class="font-bold text-gray-700 uppercase tracking-wider text-sm" id="scene-title">Estación de Inspección</span>
+                    <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded">Examen Activo</span>
+                </div>
+                
+                <div class="relative w-full cursor-crosshair select-none" id="image-container">
+                    <img id="scene-image" src="assets/escena1.png" alt="Escena de Auditoría" class="w-full h-auto block object-cover">
+                    <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+                
+                <div class="p-3 bg-gray-50 text-xs text-gray-500 text-center italic border-t border-gray-200">
+                    Haz clic sobre las áreas de la imagen donde identifiques anomalías o fallas directas contra la norma BPFA.
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            
+            <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-200 flex flex-col gap-4">
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-md flex items-center gap-2">
+                    📋 Criterio de Estación
+                </h3>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    Analiza detenidamente el entorno visual. Si consideras que esta zona de la bodega cumple por completo con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.
+                </p>
+                
+                <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm">
+                    ✅ Marcar Escena como Conforme / Sin Novedades
+                </button>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-lg border border-gray-200 flex-1 flex flex-col">
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-md flex items-center justify-between">
+                    <span>🔍 Hallazgos Detectados</span>
+                    <span id="findings-counter" class="text-xs bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full font-mono">0 hallazgos</span>
+                </h3>
+                
+                <div id="questions-container" class="space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1 text-sm text-gray-500 italic flex flex-col justify-center items-center text-center">
+                    <div id="empty-state">
+                        <p class="font-medium text-gray-400">No has marcado ninguna falla en la imagen todavía.</p>
+                        <p class="text-xs text-gray-400 mt-1">Si la escena posee fallas, haz clic directo en ellas para argumentar.</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-gray-100">
+                    <button id="btn-next" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl transition duration-200 hidden">
+                        Siguiente Escena ➡️
+                    </button>
+                    <button id="btn-finish" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 px-4 rounded-xl transition duration-200 hidden">
+                        💾 Finalizar Auditoría y Generar Reporte
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div class="bg-slate-800 text-white p-5 rounded-t-2xl flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-amber-400">REPORTE CONSOLIDADO DE AUDITORÍA</h2>
+                    <p class="text-xs text-gray-300">Resultados de la Evaluación de Buenas Prácticas de Fabricación</p>
+                </div>
+            </div>
+            <div class="p-6 space-y-6 overflow-y-auto flex-1" id="report-content">
+                </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end">
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-bold text-sm shadow transition">
+                    🖨️ Imprimir o Guardar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Banco de Datos Maestro con Tolerancia Geográfica (Hotspots) de Clics
+        const dataset = {
+            1: {
+                title: "Escena 1: Muelle de Ingreso",
+                isClean: true,
+                image: "assets/escena1.png",
+                hotspots: []
+            },
+            2: {
+                title: "Escena 2: Pasillos de Almacenamiento A",
+                isClean: false,
+                image: "assets/escena2.png",
+                hotspots: [
+                    { id: "e2_p1", x: 23, y: 72, r: 12, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
+                    { id: "e2_p2", x: 80, y: 64, r: 14, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
+                    { id: "e2_p3", x: 58, y: 22, r: 10, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+                ]
+            },
+            3: {
+                title: "Escena 3: Estanterías de Almacenamiento Especial",
+                isClean: false,
+                image: "assets/escena3.png",
+                hotspots: [
+                    { id: "e3_p1", x: 30, y: 18, r: 15, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
+                    { id: "e3_p2", x: 62, y: 32, r: 12, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
+                ]
+            },
+            4: {
+                title: "Escena 4: Área de Dosificación y Pesaje",
+                isClean: true,
+                image: "assets/escena4.png",
+                hotspots: []
+            },
+            5: {
+                title: "Escena 5: Infraestructura Alta (Techado)",
+                isClean: false,
+                image: "assets/escena5.png",
+                hotspots: [
+                    { id: "e5_p1", x: 20, y: 15, r: 12, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
+                    { id: "e5_p2", x: 74, y: 16, r: 15, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
+                ]
+            },
+            6: {
+                title: "Escena 6: Zona de Control de Desperdicios",
+                isClean: false,
+                image: "assets/escena6.png",
+                hotspots: [
+                    { id: "e6_p1", x: 45, y: 55, r: 16, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
+                    { id: "e6_p2", x: 70, y: 68, r: 14, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+                ]
+            },
+            7: {
+                title: "Escena 7: Área de Despacho Perimetral",
+                isClean: false,
+                image: "assets/escena7.png",
+                hotspots: [
+                    { id: "e7_p1", x: 45, y: 25, r: 18, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
+                    { id: "e7_p2", x: 12, y: 68, r: 10, label: "Luz inferior en estructura de puerta", q: "In la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
+                    { id: "e7_p3", x: 14, y: 84, r: 10, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+                ]
+            }
+        };
+
+        let currentSceneId = 1;
+        const studentAnswers = {}; 
+
+        // Elementos del DOM
+        const imgContainer = document.getElementById("image-container");
+        const sceneImage = document.getElementById("scene-image");
+        const pinsOverlay = document.getElementById("pins-overlay");
+        const sceneTitle = document.getElementById("scene-title");
+        const progressText = document.getElementById("progress-text");
+        const questionsContainer = document.getElementById("questions-container");
+        const findingsCounter = document.getElementById("findings-counter");
+        const btnConforme = document.getElementById("btn-conforme");
+        const btnNext = document.getElementById("btn-next");
+        const btnFinish = document.getElementById("btn-finish");
+
+        // Inicializar Escena
+        function loadScene(id) {
+            currentSceneId = id;
+            const scene = dataset[id];
+            
+            // Actualizar Interfaz Base
+            sceneImage.src = scene.image;
+            sceneTitle.textContent = scene.title;
+            progressText.textContent = `Escena ${id} de 7`;
+            
+            // Limpiar estados previos
+            pinsOverlay.innerHTML = "";
+            questionsContainer.innerHTML = "";
+            questionsContainer.className = "space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1";
+            
+            // Reestablecer Empty State si es necesario
+            const emptyStateHTML = `
+                <div id="empty-state" class="text-center py-10 text-gray-400">
+                    <p class="font-medium">No has marcado ninguna falla en la imagen todavía.</p>
+                    <p class="text-xs mt-1">Si la escena posee fallas, haz clic directo en ellas para argumentar.</p>
+                </div>`;
+            questionsContainer.innerHTML = emptyStateHTML;
+            findingsCounter.textContent = "0 hallazgos";
+            
+            // Resetear botones de navegación
+            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm";
+            btnConforme.disabled = false;
+            btnNext.classList.add("hidden");
+            btnFinish.classList.add("hidden");
+
+            // Inicializar estructura de respuestas para la escena si no existe
+            if (!studentAnswers[id]) {
+                studentAnswers[id] = {
+                    markedConforme: false,
+                    findings: {}
+                };
+            }
+        }
+
+        // Manejador de clics en el contenedor de imagen
+        imgContainer.addEventListener("click", function(e) {
+            const scene = dataset[currentSceneId];
+            if (studentAnswers[currentSceneId].markedConforme) return; // Bloquear si ya marcó conforme
+
+            // Calcular porcentajes relativos exactos de la imagen
+            const rect = imgContainer.getBoundingClientRect();
+            const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+            const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+
+            // Verificar si el clic golpeó algún hotspot configurado
+            let hit = null;
+            for (let spot of scene.hotspots) {
+                const distance = Math.sqrt(Math.pow(clickX - spot.x, 2) + Math.pow(clickY - spot.y, 2));
+                if (distance <= spot.r) {
+                    hit = spot;
+                    break;
+                }
+            }
+
+            if (hit) {
+                // Si encontramos un error, desactivamos la posibilidad de marcar como conforme libre de fallas
+                btnConforme.classList.add("opacity-40", "cursor-not-allowed");
+                btnConforme.disabled = true;
+                
+                // Si el hallazgo ya fue mapeado en pantalla, no duplicarlo
+                if (document.getElementById(`pin_${hit.id}`)) return;
+
+                // Eliminar el "empty state" del contenedor de preguntas
+                const emptyState = document.getElementById("empty-state");
+                if (emptyState) emptyState.remove();
+
+                // 1. Crear Pin Visual (Círculo rojo translúcido sobre el error)
+                const pin = document.createElement("div");
+                pin.id = `pin_${hit.id}`;
+                pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none shadow-lg shadow-red-600/30 text-white font-bold text-xs";
+                pin.style.left = `${hit.x}%`;
+                pin.style.top = `${hit.y}%`;
+                pin.style.width = `${hit.r * 2}%`;
+                pin.style.height = `${(hit.r * 2) * (rect.height / rect.width)}%`; // Corrección de aspecto
+                pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center border border-white">!</span>`;
+                pinsOverlay.appendChild(pin);
+
+                // 2. Insertar Caja de Texto en el Panel de Formulario
+                const questionBox = document.createElement("div");
+                questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 animate-fade-in";
+                questionBox.innerHTML = `
+                    <label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 Hallazgo Detectado:</label>
+                    <p class="text-xs text-gray-700 font-medium mb-2">${hit.q}</p>
+                    <textarea 
+                        id="input_${hit.id}" 
+                        rows="2" 
+                        placeholder="Escribe aquí tu justificación basada en lo aprendido..." 
+                        class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white"
+                    ></textarea>
+                `;
+                questionsContainer.appendChild(questionBox);
+
+                // Escuchar cambios para guardar la respuesta en tiempo real
+                const textarea = document.getElementById(`input_${hit.id}`);
+                textarea.addEventListener("input", function() {
+                    studentAnswers[currentSceneId].findings[hit.id] = textarea.value;
+                });
+
+                // Actualizar contador de hallazgos en pantalla
+                const currentCount = Object.keys(document.querySelectorAll("[id^='pin_']")).length;
+                findingsCounter.textContent = `${currentCount} hallazgo${currentCount > 1 ? 's' : ''}`;
+
+                // Mostrar botón de flujo de navegación
+                showNavigationButtons();
+            }
+        });
+
+        // Evento Botón Conforme (Sin Novedades)
+        btnConforme.addEventListener("click", function() {
+            studentAnswers[currentSceneId].markedConforme = true;
+            
+            // Cambiar aspecto para denotar bloqueo conforme exitoso
+            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm text-center";
+            btnConforme.textContent = "🔒 Registrado como Conforme";
+            btnConforme.disabled = true;
+
+            const emptyState = document.getElementById("empty-state");
+            if (emptyState) emptyState.remove();
+
+            questionsContainer.className = "space-y-4 mt-4 flex-1 overflow-y-auto max-h-[380px] pr-1 flex flex-col justify-center items-center text-center text-emerald-600 font-semibold";
+            questionsContainer.innerHTML = `
+                <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full">
+                    <p class="text-sm">Has validado esta área como libre de anomalías operativos.</p>
+                    <p class="text-xs font-normal text-gray-500 mt-1">Tu decisión ha sido guardada en la planilla de auditoría.</p>
+                </div>
+            `;
+
+            showNavigationButtons();
+        });
+
+        // Control de visibilidad de los botones de avance
+        function showNavigationButtons() {
+            if (currentSceneId < 7) {
+                btnNext.classList.remove("hidden");
+            } else {
+                btnFinish.classList.remove("hidden");
+            }
+        }
+
+        // Navegación de Siguiente Escena
+        btnNext.addEventListener("click", function() {
+            if (currentSceneId < 7) {
+                loadScene(currentSceneId + 1);
+            }
+        });
+
+        // Finalización del Examen y Despliegue del Reporte
+        btnFinish.addEventListener("click", function() {
+            const modal = document.getElementById("report-modal");
+            const content = document.getElementById("report-content");
+            
+            let htmlReport = `
+                <div class="bg-amber-50 border border-amber-300 p-4 rounded-xl text-sm text-amber-900 mb-4">
+                    <strong>Instrucciones para el Evaluador:</strong> Revisa los argumentos ingresados por el estudiante frente a la solución esperada del módulo técnico para asignar la calificación final. Puedes guardar este reporte en formato PDF o mandarlo a impresión física.
+                </div>
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider border-b border-gray-300">
+                            <th class="p-3 font-bold">Escenario</th>
+                            <th class="p-3 font-bold">Criterio Alumno</th>
+                            <th class="p-3 font-bold">Argumentos Evaluados / Guía de Solución</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+            `;
+
+            for (let id = 1; id <= 7; id++) {
+                const scene = dataset[id];
+                const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
+                
+                let criteriaStyle = ans.markedConforme ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold';
+                let criteriaText = ans.markedConforme ? 'Marcó Conforme' : 'Reportó Fallas';
+
+                htmlReport += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-medium text-gray-900 align-top">${scene.title}</td>
+                        <td class="p-3 align-top"><span class="${criteriaStyle}">${criteriaText}</span></td>
+                        <td class="p-3 space-y-3 align-top">
+                `;
+
+                if (scene.isClean) {
+                    // Escenas que debían marcarse conformes
+                    if (ans.markedConforme) {
+                        htmlReport += `<p class="text-emerald-600 font-medium">✨ Correcto: El estudiante reconoció adecuadamente que el área cumple con los estándares higiénicos del módulo.</p>`;
+                    } else {
+                        htmlReport += `<p class="text-rose-600 font-medium">⚠️ Desviación: El estudiante intentó buscar fallas en un área que cumple al 100% con las BPM.</p>`;
+                    }
+                } else {
+                    // Escenas que tenían errores configurados
+                    if (ans.markedConforme) {
+                        htmlReport += `<p class="text-rose-600 font-medium">❌ Omisión Crítica: El alumno dio conformidad a un área que poseía infracciones estructurales u operativas.</p>`;
+                    } else {
+                        // Desglosar cada hotspot de la escena con la respuesta del estudiante
+                        scene.hotspots.forEach(spot => {
+                            const studentText = ans.findings[spot.id] || '<span class="text-rose-500 italic">No detectado / No respondido</span>';
+                            htmlReport += `
+                                <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                                    <strong class="text-slate-700 block">📍 Falla: ${spot.label}</strong>
+                                    <p class="text-gray-600 italic mt-0.5">"Respuesta dada: ${studentText}"</p>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+
+                htmlReport += `</td></tr>`;
+            }
+
+            htmlReport += `</tbody></table>`;
+            content.innerHTML = htmlReport;
+            modal.classList.remove("hidden");
+        });
+
+        // Arrancar la aplicación en la escena inicial
+        window.onload = function() {
+            loadScene(1);
+        };
+    </script>
+</body>
+</html>
