@@ -6,59 +6,21 @@
     <title>Simulador de Auditoría - BPFA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .hotspot-marker {
-            transform: translate(-50%, -50%);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
-            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
-        }
-        
-        @keyframes highlight {
-            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.5; }
-            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.5; }
-        }
-        
-        @media (max-width: 768px) {
-            .hotspot-marker { width: 40px !important; height: 40px !important; }
-            .hotspot-marker span { width: 28px !important; height: 28px !important; font-size: 14px !important; }
-            textarea { font-size: 14px !important; }
-            button { min-height: 48px; }
-            #questions-container { max-height: 280px !important; }
-        }
-        
-        @media (max-width: 640px) {
-            .grid-cols-1.lg\:grid-cols-3 { gap: 1rem !important; }
-            .p-4 { padding: 0.75rem !important; }
-            .p-5 { padding: 1rem !important; }
-        }
-        
-        @media (max-width: 768px) {
-            .cursor-crosshair { cursor: pointer; }
-        }
-        
+        * { -webkit-tap-highlight-color: transparent; }
+        .hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } }
+        @media (max-width: 768px) { .hotspot-marker { width: 40px !important; height: 40px !important; } .hotspot-marker span { width: 28px !important; height: 28px !important; font-size: 14px !important; } textarea { font-size: 14px !important; } button { min-height: 48px; } }
         html { scroll-behavior: smooth; }
-        
-        /* Modal de registro inicial */
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(4px);
-        }
+        .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
 
     <!-- Modal de Registro de Estudiante -->
     <div id="registration-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl transform transition-all">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl transform transition-all fade-in">
             <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
                 <h2 class="text-2xl font-bold text-amber-400">📋 BPFA Auditoría</h2>
                 <p class="text-sm text-gray-300 mt-1">Sistema de Evaluación de Buenas Prácticas</p>
@@ -67,299 +29,271 @@
                 <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nombre completo del estudiante:</label>
                 <input type="text" id="student-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500" placeholder="Ej: Juan Pablo Pérez García" autocomplete="off">
                 <p class="text-xs text-gray-500 mt-2">⚠️ El nombre se usará para identificar tu reporte de auditoría</p>
-                <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6 transition duration-200">
-                    🚀 Comenzar Auditoría
-                </button>
+                <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6 transition duration-200">🚀 Comenzar Auditoría</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Panel de Administrador -->
+    <div id="admin-panel" class="fixed bottom-4 right-4 z-40 hidden">
+        <button id="btn-admin" class="bg-slate-800 hover:bg-slate-900 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-105">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </button>
+    </div>
+
+    <!-- Modal de Administrador -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div class="bg-slate-800 text-white p-5 rounded-t-2xl flex justify-between items-center sticky top-0">
+                <div><h2 class="text-xl font-bold text-amber-400">📊 Panel de Administrador</h2><p class="text-xs text-gray-300">Resultados de todos los estudiantes</p></div>
+                <div class="flex gap-2">
+                    <button id="btn-export-csv" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition">📊 Exportar CSV</button>
+                    <button id="btn-export-all-json" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition">💾 Exportar Todo</button>
+                    <button id="btn-clear-all" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">🗑️ Limpiar Todo</button>
+                    <button id="btn-close-admin" class="text-white hover:text-amber-400 text-2xl leading-none">&times;</button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto" id="admin-content"><div class="text-center py-10 text-gray-500">Cargando resultados...</div></div>
         </div>
     </div>
 
     <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
-        <div class="text-center md:text-left">
-            <h1 class="text-lg md:text-xl font-bold tracking-wide text-amber-400">PLATAER INTERACTIVA BPFA</h1>
-            <p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p>
-        </div>
+        <div class="text-center md:text-left"><h1 class="text-lg md:text-xl font-bold tracking-wide text-amber-400">PLATAER INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
         <div class="flex gap-3 items-center">
-            <div class="bg-slate-700 px-3 py-1 md:py-2 rounded-lg border border-slate-600 text-center">
-                <span class="text-xs text-gray-300">🎯 Ayudas</span>
-                <span id="help-counter" class="text-amber-400 font-bold text-lg md:text-xl block leading-tight">3</span>
-            </div>
-            <div class="bg-slate-700 px-3 py-1 md:py-2 rounded-lg border border-slate-600">
-                <span class="text-xs md:text-sm font-semibold">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span>
-            </div>
+            <div class="bg-slate-700 px-3 py-1 md:py-2 rounded-lg border border-slate-600 text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg md:text-xl block leading-tight">3</span></div>
+            <div class="bg-slate-700 px-3 py-1 md:py-2 rounded-lg border border-slate-600"><span class="text-xs md:text-sm font-semibold">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
         </div>
     </header>
 
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6" id="main-content" style="display: none;">
-        
         <div class="lg:col-span-2 flex flex-col justify-between">
             <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 relative">
                 <div class="bg-gray-200 px-3 md:px-4 py-2 flex flex-col sm:flex-row justify-between items-center gap-2 border-b border-gray-300">
                     <span class="font-bold text-gray-700 uppercase tracking-wider text-xs md:text-sm" id="scene-title">Estación de Inspección</span>
-                    <div class="flex gap-2">
-                        <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">Examen Activo</span>
-                        <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1 rounded transition-all duration-200 whitespace-nowrap">
-                            💡 Ayuda
-                        </button>
-                    </div>
+                    <div class="flex gap-2"><span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">Examen Activo</span><button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1 rounded transition-all duration-200 whitespace-nowrap">💡 Ayuda</button></div>
                 </div>
-                
                 <div class="relative w-full cursor-crosshair select-none" id="image-container">
                     <img id="scene-image" src="" alt="Escena de Auditoría" class="w-full h-auto block object-cover" loading="lazy">
                     <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
                 </div>
-                
-                <div class="p-2 md:p-3 bg-gray-50 text-xs text-gray-500 text-center italic border-t border-gray-200">
-                    📱 Toca o haz clic en las áreas donde identifiques anomalías
-                </div>
+                <div class="p-2 md:p-3 bg-gray-50 text-xs text-gray-500 text-center italic border-t border-gray-200">📱 Toca o haz clic en las áreas donde identifiques anomalías</div>
             </div>
         </div>
-
         <div class="flex flex-col gap-4">
             <div class="bg-white p-4 md:p-5 rounded-xl shadow-lg border border-gray-200">
-                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm md:text-md flex items-center gap-2">
-                    📋 Criterio de Estación
-                </h3>
-                <p class="text-xs md:text-sm text-gray-600 leading-relaxed mt-2">
-                    Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.
-                </p>
-                
-                <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm md:text-base mt-3">
-                    ✅ Marcar como Conforme
-                </button>
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm md:text-md flex items-center gap-2">📋 Criterio de Estación</h3>
+                <p class="text-xs md:text-sm text-gray-600 leading-relaxed mt-2">Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.</p>
+                <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm md:text-base mt-3">✅ Marcar como Conforme</button>
             </div>
-
             <div class="bg-white p-4 md:p-5 rounded-xl shadow-lg border border-gray-200 flex-1 flex flex-col">
-                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm md:text-md flex items-center justify-between">
-                    <span>🔍 Hallazgos Detectados</span>
-                    <span id="findings-counter" class="text-xs bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full font-mono">0 hallazgos</span>
-                </h3>
-                
-                <div id="questions-container" class="space-y-3 mt-3 flex-1 overflow-y-auto max-h-[280px] md:max-h-[380px] pr-1 text-xs md:text-sm">
-                    <div id="empty-state" class="text-center py-8 md:py-10 text-gray-400">
-                        <p class="font-medium">No has marcado ninguna falla</p>
-                        <p class="text-xs mt-1">Toca directamente en la imagen donde veas anomalías</p>
-                    </div>
-                </div>
-
-                <div class="mt-3 pt-3 border-t border-gray-100">
-                    <button id="btn-next" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl transition duration-200 hidden">
-                        Siguiente Escena ➡️
-                    </button>
-                    <button id="btn-finish" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 px-4 rounded-xl transition duration-200 hidden">
-                        💾 Finalizar Auditoría
-                    </button>
-                </div>
+                <h3 class="font-bold text-gray-800 border-b pb-2 text-sm md:text-md flex items-center justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 text-slate-800 px-2 py-0.5 rounded-full font-mono">0 hallazgos</span></h3>
+                <div id="questions-container" class="space-y-3 mt-3 flex-1 overflow-y-auto max-h-[280px] md:max-h-[380px] pr-1 text-xs md:text-sm"><div id="empty-state" class="text-center py-8 md:py-10 text-gray-400"><p class="font-medium">No has marcado ninguna falla</p><p class="text-xs mt-1">Toca directamente en la imagen donde veas anomalías</p></div></div>
+                <div class="mt-3 pt-3 border-t border-gray-100"><button id="btn-next" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl transition duration-200 hidden">Siguiente Escena ➡️</button><button id="btn-finish" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 px-4 rounded-xl transition duration-200 hidden">💾 Finalizar Auditoría</button></div>
             </div>
         </div>
     </main>
 
-    <!-- Modal de Reporte -->
     <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 md:p-4 hidden">
         <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            <div class="bg-slate-800 text-white p-4 md:p-5 rounded-t-2xl flex justify-between items-center sticky top-0">
-                <div>
-                    <h2 class="text-lg md:text-xl font-bold text-amber-400">REPORTE DE AUDITORÍA</h2>
-                    <p class="text-xs text-gray-300" id="report-student-name"></p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="sendReportByEmail()" class="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-1 rounded-lg text-sm transition">
-                        📧 Enviar
-                    </button>
-                    <button onclick="closeModal()" class="text-white hover:text-amber-400 text-2xl leading-none">&times;</button>
-                </div>
-            </div>
+            <div class="bg-slate-800 text-white p-4 md:p-5 rounded-t-2xl flex justify-between items-center sticky top-0"><div><h2 class="text-lg md:text-xl font-bold text-amber-400">REPORTE DE AUDITORÍA</h2><p class="text-xs text-gray-300" id="report-student-name"></p></div><div class="flex gap-2"><button onclick="sendReportByEmail()" class="bg-green-600 hover:bg-green-700 text-white px-3 md:px-4 py-1 rounded-lg text-sm transition">📧 Enviar</button><button onclick="closeReportModal()" class="text-white hover:text-amber-400 text-2xl leading-none">&times;</button></div></div>
             <div class="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1" id="report-content"></div>
-            <div class="p-3 md:p-4 bg-gray-50 border-t flex flex-wrap justify-end gap-2 md:gap-3 sticky bottom-0">
-                <button onclick="copyReportToClipboard()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">
-                    📋 Copiar Reporte
-                </button>
-                <button onclick="downloadReportAsJSON()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">
-                    💾 Descargar JSON
-                </button>
-                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">
-                    🖨️ Guardar PDF
-                </button>
-            </div>
+            <div class="p-3 md:p-4 bg-gray-50 border-t flex flex-wrap justify-end gap-2 md:gap-3 sticky bottom-0"><button onclick="copyReportToClipboard()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">📋 Copiar Reporte</button><button onclick="downloadReportAsJSON()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">💾 Descargar JSON</button><button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-5 py-2 rounded-xl font-bold text-sm shadow transition">🖨️ Guardar PDF</button></div>
         </div>
     </div>
 
     <script>
-        // DATASET CON RADIO DE DETECCIÓN MÁS HOLGADO (r: 18)
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
-                { id: "e2_p1", x: 23, y: 72, r: 18, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento al ser arrumados sobre un suelo con manchas de humedad?" },
-                { id: "e2_p2", x: 80, y: 64, r: 18, label: "Estiba Dañada", q: "¿Por qué es peligroso mantener estibas rotas o astilladas en los pasillos de almacenamiento?" },
-                { id: "e2_p3", x: 18, y: 55, r: 18, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes?" }
+                { id: "e2_p1", x: 23, y: 72, r: 13, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento al ser arrumados sobre un suelo con manchas de humedad?" },
+                { id: "e2_p2", x: 80, y: 64, r: 13, label: "Estiba Dañada", q: "¿Por qué es peligroso mantener estibas rotas o astilladas en los pasillos de almacenamiento?" },
+                { id: "e2_p3", x: 18, y: 55, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes?" }
             ] },
             3: { title: "Escena 3: Estanterías", isClean: false, image: "assets/escena3.png", hotspots: [
-                { id: "e3_p1", x: 30, y: 18, r: 18, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar alimento medicado sobre alimentos comerciales es un error grave." },
-                { id: "e3_p2", x: 62, y: 32, r: 18, label: "Derrame de polvillo medicado", q: "¿Qué consecuencias trae el polvo de medicamento derramado sobre los sacos inferiores?" }
+                { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar alimento medicado sobre alimentos comerciales es un error grave." },
+                { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de polvillo medicado", q: "¿Qué consecuencias trae el polvo de medicamento derramado sobre los sacos inferiores?" }
             ] },
             4: { title: "Escena 4: Área de Dosificación", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
-                { id: "e5_p1", x: 20, y: 15, r: 18, label: "Gotera activa", q: "¿Por qué una gotera activa compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 18, label: "Luminaria expuesta", q: "¿Qué peligro físico corren los alimentos si las lámparas no tienen protector?" }
+                { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "¿Por qué una gotera activa compromete la calidad de la planta?" },
+                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta", q: "¿Qué peligro físico corren los alimentos si las lámparas no tienen protector?" }
             ] },
             6: { title: "Escena 6: Control de Desperdicios", isClean: false, image: "assets/escena6.png", hotspots: [
-                { id: "e6_p1", x: 45, y: 55, r: 18, label: "Saco roto y derrame", q: "¿Qué problemas de bioseguridad acarrea el alimento esparcido en el suelo?" },
-                { id: "e6_p2", x: 70, y: 68, r: 18, label: "Herramientas en el suelo", q: "¿Cuál es el error de dejar escobas y traperos tirados en el piso?" }
+                { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "¿Qué problemas de bioseguridad acarrea el alimento esparcido en el suelo?" },
+                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas en el suelo", q: "¿Cuál es el error de dejar escobas y traperos tirados en el piso?" }
             ] },
             7: { title: "Escena 7: Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
-                { id: "e7_p1", x: 45, y: 25, r: 18, label: "Portón abierto", q: "¿Qué norma se incumple al abrir la puerta hacia un patio con maleza?" },
-                { id: "e7_p2", x: 12, y: 68, r: 18, label: "Falta de hermeticidad", q: "¿Por qué es una falla grave el espacio libre bajo la puerta?" },
-                { id: "e7_p3", x: 14, y: 84, r: 18, label: "Trampa de plagas rota", q: "¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+                { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto", q: "¿Qué norma se incumple al abrir la puerta hacia un patio con maleza?" },
+                { id: "e7_p2", x: 12, y: 68, r: 13, label: "Falta de hermeticidad", q: "¿Por qué es una falla grave el espacio libre bajo la puerta?" },
+                { id: "e7_p3", x: 14, y: 84, r: 13, label: "Trampa de plagas rota", q: "¿Qué medida correctiva se debe registrar ante este hallazgo?" }
             ] }
         };
 
-        let currentSceneId = 1;
-        let availableHelps = 3;
-        let studentName = "";
+        let currentSceneId = 1, availableHelps = 3, studentName = "";
         const studentAnswers = {};
 
-        // Elementos DOM
-        const sceneImage = document.getElementById("scene-image");
-        const sceneTitle = document.getElementById("scene-title");
-        const progressText = document.getElementById("progress-text");
-        const pinsOverlay = document.getElementById("pins-overlay");
-        const questionsContainer = document.getElementById("questions-container");
-        const findingsCounter = document.getElementById("findings-counter");
-        const btnConforme = document.getElementById("btn-conforme");
-        const btnNext = document.getElementById("btn-next");
-        const btnFinish = document.getElementById("btn-finish");
-        const btnHelp = document.getElementById("btn-help");
-        const helpCounter = document.getElementById("help-counter");
-        const imgContainer = document.getElementById("image-container");
-        const mainContent = document.getElementById("main-content");
-        const registrationModal = document.getElementById("registration-modal");
-        const studentNameInput = document.getElementById("student-name");
-        const btnStart = document.getElementById("btn-start");
+        const sceneImage = document.getElementById("scene-image"), sceneTitle = document.getElementById("scene-title"), progressText = document.getElementById("progress-text"), pinsOverlay = document.getElementById("pins-overlay"), questionsContainer = document.getElementById("questions-container"), findingsCounter = document.getElementById("findings-counter"), btnConforme = document.getElementById("btn-conforme"), btnNext = document.getElementById("btn-next"), btnFinish = document.getElementById("btn-finish"), btnHelp = document.getElementById("btn-help"), helpCounter = document.getElementById("help-counter"), imgContainer = document.getElementById("image-container"), mainContent = document.getElementById("main-content"), registrationModal = document.getElementById("registration-modal"), studentNameInput = document.getElementById("student-name"), btnStart = document.getElementById("btn-start"), adminPanel = document.getElementById("admin-panel"), btnAdmin = document.getElementById("btn-admin"), adminModal = document.getElementById("admin-modal");
 
-        // Iniciar auditoría con nombre del estudiante
+        function loadAdminResults() {
+            const savedResults = localStorage.getItem("bpfa_auditoria_results");
+            if (savedResults && JSON.parse(savedResults).length > 0) adminPanel.classList.remove("hidden");
+        }
+
+        function saveResult() {
+            const existingResults = localStorage.getItem("bpfa_auditoria_results");
+            let results = existingResults ? JSON.parse(existingResults) : [];
+            results.push({ id: Date.now(), studentName, timestamp: new Date().toISOString(), helpsUsed: 3 - availableHelps, answers: studentAnswers, completedScenes: Object.keys(studentAnswers).length });
+            localStorage.setItem("bpfa_auditoria_results", JSON.stringify(results));
+            adminPanel.classList.remove("hidden");
+        }
+
+        window.showAdminPanel = function() {
+            const savedResults = localStorage.getItem("bpfa_auditoria_results");
+            if (!savedResults) { document.getElementById("admin-content").innerHTML = '<div class="text-center py-10 text-gray-500">No hay resultados guardados aún.</div>'; adminModal.classList.remove("hidden"); return; }
+            const results = JSON.parse(savedResults);
+            let html = `<div class="mb-4 p-3 bg-blue-50 rounded-lg"><p class="text-sm font-semibold">📊 Estadísticas generales</p><p class="text-xs text-gray-600">Total de auditorías completadas: ${results.length}</p></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-slate-100"><th class="p-3">#</th><th class="p-3">Estudiante</th><th class="p-3">Fecha</th><th class="p-3">Ayudas usadas</th><th class="p-3">Escenas completadas</th><th class="p-3">Acciones</th></tr></thead><tbody>`;
+            results.slice().reverse().forEach((result, index) => { html += `<tr class="border-b hover:bg-gray-50"><td class="p-3">${index + 1}</td><td class="p-3 font-medium">${result.studentName}</td><td class="p-3 text-xs">${new Date(result.timestamp).toLocaleString()}</td><td class="p-3">${result.helpsUsed}/3</td><td class="p-3">${result.completedScenes}/7</td><td class="p-3"><button onclick="viewResultDetail(${result.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">Ver</button> <button onclick="deleteResult(${result.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">Eliminar</button></td></tr>`; });
+            html += `</tbody></table></div>`;
+            document.getElementById("admin-content").innerHTML = html;
+            adminModal.classList.remove("hidden");
+        };
+
+        window.viewResultDetail = function(id) {
+            const results = JSON.parse(localStorage.getItem("bpfa_auditoria_results"));
+            const result = results.find(r => r.id === id);
+            let detailHtml = `<div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl mb-4"><p><strong>👤 Estudiante:</strong> ${result.studentName}</p><p><strong>📅 Fecha:</strong> ${new Date(result.timestamp).toLocaleString()}</p><p><strong>🎯 Ayudas:</strong> ${result.helpsUsed}/3</p><button onclick="showAdminPanel()" class="mt-3 bg-slate-600 text-white px-3 py-1 rounded text-sm">← Volver</button></div><table class="w-full text-left border-collapse text-xs"><thead><tr class="bg-slate-100"><th class="p-2">Escenario</th><th class="p-2">Criterio</th><th class="p-2">Hallazgos</th></tr></thead><tbody>`;
+            for (let sceneId = 1; sceneId <= 7; sceneId++) {
+                const scene = dataset[sceneId];
+                const ans = result.answers[sceneId] || { markedConforme: false, findings: {} };
+                detailHtml += `<tr><td class="p-2 font-medium">${scene.title}</td><td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td><td class="p-2">`;
+                if (!scene.isClean && !ans.markedConforme) { scene.hotspots.forEach(spot => { detailHtml += `<div><strong>${spot.label}:</strong> ${ans.findings[spot.id] || 'No respondido'}</div>`; }); }
+                else if (!scene.isClean && ans.markedConforme) detailHtml += '<span class="text-rose-600">❌ Error: No detectó fallas</span>';
+                else if (scene.isClean && !ans.markedConforme) detailHtml += '<span class="text-rose-600">❌ Falso positivo</span>';
+                else detailHtml += '<span class="text-emerald-600">✅ Correcto</span>';
+                detailHtml += `</td></tr>`;
+            }
+            detailHtml += `</tbody></table>`;
+            document.getElementById("admin-content").innerHTML = detailHtml;
+        };
+
+        window.deleteResult = function(id) {
+            if (!confirm("¿Eliminar este resultado?")) return;
+            let results = JSON.parse(localStorage.getItem("bpfa_auditoria_results"));
+            results = results.filter(r => r.id !== id);
+            localStorage.setItem("bpfa_auditoria_results", JSON.stringify(results));
+            if (results.length === 0) adminPanel.classList.add("hidden");
+            showAdminPanel();
+        };
+
+        document.getElementById("btn-export-csv").addEventListener("click", function() {
+            const results = JSON.parse(localStorage.getItem("bpfa_auditoria_results"));
+            if (!results) return;
+            let csv = "ID,Estudiante,Fecha,Ayudas Usadas,Calificación\n";
+            results.forEach(r => {
+                let score = 0;
+                for (let i = 1; i <= 7; i++) {
+                    const scene = dataset[i];
+                    const ans = r.answers[i] || { markedConforme: false, findings: {} };
+                    if (scene.isClean && ans.markedConforme) score++;
+                    if (!scene.isClean && !ans.markedConforme && Object.keys(ans.findings).length === scene.hotspots.length) score++;
+                }
+                csv += `${r.id},"${r.studentName}","${r.timestamp}",${r.helpsUsed},${score}/7\n`;
+            });
+            const blob = new Blob([csv], { type: "text/csv" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        document.getElementById("btn-export-all-json").addEventListener("click", function() {
+            const results = localStorage.getItem("bpfa_auditoria_results");
+            if (!results) return;
+            const blob = new Blob([results], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `auditoria_todos_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        document.getElementById("btn-clear-all").addEventListener("click", function() {
+            if (confirm("⚠️ ¿Eliminar TODOS los resultados?")) { localStorage.removeItem("bpfa_auditoria_results"); adminPanel.classList.add("hidden"); showAdminPanel(); }
+        });
+
+        document.getElementById("btn-close-admin").addEventListener("click", () => adminModal.classList.add("hidden"));
+        btnAdmin.addEventListener("click", showAdminPanel);
+
         btnStart.addEventListener("click", function() {
             studentName = studentNameInput.value.trim();
-            if (studentName === "") {
-                alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
-                studentNameInput.focus();
-                return;
-            }
-            
+            if (!studentName) { alert("⚠️ Ingresa tu nombre"); studentNameInput.focus(); return; }
             registrationModal.style.display = "none";
             mainContent.style.display = "grid";
             updateHelpCounter();
             loadScene(1);
         });
 
-        // Permitir Enter en el campo de nombre
-        studentNameInput.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                btnStart.click();
-            }
-        });
+        studentNameInput.addEventListener("keypress", e => { if (e.key === "Enter") btnStart.click(); });
 
         function updateHelpCounter() {
             helpCounter.textContent = availableHelps;
-            if (availableHelps === 0) {
-                btnHelp.disabled = true;
-                btnHelp.classList.add("opacity-50", "cursor-not-allowed");
-                btnHelp.textContent = "💔 Sin Ayudas";
-            } else {
-                btnHelp.disabled = false;
-                btnHelp.classList.remove("opacity-50", "cursor-not-allowed");
-                btnHelp.textContent = "💡 Ayuda";
-            }
+            if (availableHelps === 0) { btnHelp.disabled = true; btnHelp.classList.add("opacity-50"); btnHelp.textContent = "💔 Sin Ayudas"; }
+            else { btnHelp.disabled = false; btnHelp.classList.remove("opacity-50"); btnHelp.textContent = "💡 Ayuda"; }
         }
 
         function revealNextMissingHotspot() {
-            if (availableHelps <= 0) {
-                alert("❌ No te quedan ayudas. ¡Agudiza tu observación!");
-                return null;
-            }
-
+            if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return null; }
             const scene = dataset[currentSceneId];
-            if (scene.isClean) {
-                alert("✅ Esta escena no tiene fallas. ¡Continúa!");
-                return null;
-            }
-
+            if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return null; }
             const currentFindings = studentAnswers[currentSceneId]?.findings || {};
-            const missingHotspots = scene.hotspots.filter(spot => !currentFindings[spot.id]);
-            
-            if (missingHotspots.length === 0) {
-                alert("🎉 ¡Ya encontraste todas las fallas!");
-                return null;
-            }
-
-            const spotToReveal = missingHotspots[0];
-            
+            const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
+            if (missing.length === 0) { alert("🎉 Ya encontraste todas"); return null; }
+            const spot = missing[0];
             const helpPin = document.createElement("div");
-            helpPin.id = `help_pin_${spotToReveal.id}`;
             helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full flex items-center justify-center pointer-events-none z-40";
-            helpPin.style.left = `${spotToReveal.x}%`;
-            helpPin.style.top = `${spotToReveal.y}%`;
+            helpPin.style.left = `${spot.x}%`;
+            helpPin.style.top = `${spot.y}%`;
             helpPin.style.width = "44px";
             helpPin.style.height = "44px";
             helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white text-white font-bold text-sm animate-pulse">?</span>`;
             pinsOverlay.appendChild(helpPin);
-            
-            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spotToReveal.label}\n\n🔍 Busca en el área indicada.`);
-            
-            setTimeout(() => {
-                if (helpPin) helpPin.remove();
-            }, 4000);
-            
+            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}`);
+            setTimeout(() => helpPin.remove(), 4000);
             availableHelps--;
             updateHelpCounter();
-            
-            return spotToReveal;
+            return spot;
         }
 
-        btnHelp.addEventListener("click", function() {
-            if (availableHelps <= 0) {
-                alert("❌ No quedan ayudas disponibles.");
-                return;
-            }
-            
-            if (studentAnswers[currentSceneId]?.markedConforme) {
-                alert("⚠️ Ya marcaste esta escena como conforme.");
-                return;
-            }
-            
+        btnHelp.addEventListener("click", () => {
+            if (availableHelps === 0) { alert("❌ No quedan ayudas"); return; }
+            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme"); return; }
             revealNextMissingHotspot();
         });
 
         function loadScene(id) {
             currentSceneId = id;
             const scene = dataset[id];
-            
             sceneImage.src = scene.image;
             sceneTitle.textContent = scene.title;
             progressText.textContent = `Escena ${id} de 7`;
-            
             pinsOverlay.innerHTML = "";
-            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 md:py-10 text-gray-400"><p class="font-medium">No has marcado ninguna falla</p><p class="text-xs mt-1">Toca directamente en la imagen donde veas anomalías</p></div>`;
+            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 md:py-10 text-gray-400"><p class="font-medium">No has marcado ninguna falla</p><p class="text-xs mt-1">Toca directamente en la imagen</p></div>`;
             findingsCounter.textContent = "0 hallazgos";
-            
             btnConforme.disabled = false;
-            btnConforme.classList.remove("opacity-40", "cursor-not-allowed");
-            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition duration-200 flex justify-center items-center gap-2 text-sm md:text-base";
+            btnConforme.classList.remove("opacity-40");
+            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow transition";
             btnConforme.textContent = "✅ Marcar como Conforme";
-            
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
+            if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
 
-            if (!studentAnswers[id]) {
-                studentAnswers[id] = { markedConforme: false, findings: {} };
-            }
-            
-            const existingFindings = studentAnswers[id].findings;
-            if (Object.keys(existingFindings).length > 0) {
-                const emptyState = document.getElementById("empty-state");
-                if (emptyState) emptyState.remove();
-                
+            const existing = studentAnswers[id].findings;
+            if (Object.keys(existing).length > 0) {
+                const empty = document.getElementById("empty-state");
+                if (empty) empty.remove();
                 scene.hotspots.forEach(spot => {
-                    if (existingFindings[spot.id]) {
+                    if (existing[spot.id]) {
                         const pin = document.createElement("div");
                         pin.id = `pin_${spot.id}`;
                         pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none";
@@ -369,48 +303,34 @@
                         pin.style.height = "34px";
                         pin.innerHTML = `<span class="bg-red-700 w-6 h-6 rounded-full flex items-center justify-center border border-white text-white font-bold text-xs">!</span>`;
                         pinsOverlay.appendChild(pin);
-                        
-                        const questionBox = document.createElement("div");
-                        questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 shadow-sm";
-                        questionBox.innerHTML = `<label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 ${spot.label}</label><p class="text-xs text-gray-700 font-medium mb-2">${spot.q}</p><textarea id="input_${spot.id}" rows="2" placeholder="Escribe tu justificación..." class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 bg-white">${existingFindings[spot.id]}</textarea>`;
-                        questionsContainer.appendChild(questionBox);
-                        
-                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() {
-                            studentAnswers[currentSceneId].findings[spot.id] = this.value;
-                        });
+                        const box = document.createElement("div");
+                        box.className = "bg-slate-50 p-3 rounded-lg border border-red-200";
+                        box.innerHTML = `<label class="block text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-700 mb-2">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded-md text-xs bg-white">${existing[spot.id]}</textarea>`;
+                        questionsContainer.appendChild(box);
+                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { studentAnswers[currentSceneId].findings[spot.id] = this.value; });
                     }
                 });
-                
-                const foundCount = Object.keys(existingFindings).length;
-                findingsCounter.textContent = `${foundCount} de ${scene.hotspots.length} fallas`;
-                if (foundCount === scene.hotspots.length) showNavigationButtons();
+                const count = Object.keys(existing).length;
+                findingsCounter.textContent = `${count} de ${scene.hotspots.length} fallas`;
+                if (count === scene.hotspots.length) showNavButtons();
             }
         }
 
         imgContainer.addEventListener("click", function(e) {
             const scene = dataset[currentSceneId];
             if (studentAnswers[currentSceneId].markedConforme) return;
-            
             const rect = imgContainer.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
-
             let hit = null;
             for (let spot of scene.hotspots) {
-                const distance = Math.sqrt(Math.pow(clickX - spot.x, 2) + Math.pow(clickY - spot.y, 2));
-                if (distance <= spot.r) { 
-                    hit = spot; 
-                    break; 
-                }
+                if (Math.hypot(clickX - spot.x, clickY - spot.y) <= spot.r) { hit = spot; break; }
             }
-
             if (hit && !document.getElementById(`pin_${hit.id}`)) {
                 btnConforme.disabled = true;
-                btnConforme.classList.add("opacity-40", "cursor-not-allowed");
-                
-                const emptyState = document.getElementById("empty-state");
-                if (emptyState) emptyState.remove();
-
+                btnConforme.classList.add("opacity-40");
+                const empty = document.getElementById("empty-state");
+                if (empty) empty.remove();
                 const pin = document.createElement("div");
                 pin.id = `pin_${hit.id}`;
                 pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full hotspot-marker flex items-center justify-center pointer-events-none";
@@ -420,51 +340,37 @@
                 pin.style.height = "34px";
                 pin.innerHTML = `<span class="bg-red-700 w-6 h-6 rounded-full flex items-center justify-center border border-white text-white font-bold text-xs">!</span>`;
                 pinsOverlay.appendChild(pin);
-
-                const questionBox = document.createElement("div");
-                questionBox.className = "bg-slate-50 p-3 rounded-lg border border-red-200 shadow-sm";
-                questionBox.innerHTML = `<label class="block text-xs font-bold text-red-700 uppercase tracking-wider mb-1">🚨 ${hit.label}</label><p class="text-xs text-gray-700 font-medium mb-2">${hit.q}</p><textarea id="input_${hit.id}" rows="2" placeholder="Escribe tu justificación..." class="w-full p-2 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-red-500 bg-white"></textarea>`;
-                questionsContainer.appendChild(questionBox);
-
-                document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
-                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
-                    const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                    findingsCounter.textContent = `${currentCount} de ${scene.hotspots.length} fallas`;
-                    if (currentCount === scene.hotspots.length) showNavigationButtons();
-                });
-
-                const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length + 1;
-                findingsCounter.textContent = `${currentCount} de ${scene.hotspots.length} fallas`;
-                if (currentCount === scene.hotspots.length) showNavigationButtons();
-                
-                if (window.navigator && window.navigator.vibrate) {
-                    window.navigator.vibrate(50);
-                }
+                const box = document.createElement("div");
+                box.className = "bg-slate-50 p-3 rounded-lg border border-red-200";
+                box.innerHTML = `<label class="block text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-700 mb-2">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded-md text-xs bg-white"></textarea>`;
+                questionsContainer.appendChild(box);
+                document.getElementById(`input_${hit.id}`).addEventListener("input", function() { studentAnswers[currentSceneId].findings[hit.id] = this.value; });
+                const newCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
+                if (newCount === scene.hotspots.length) showNavButtons();
+                if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
         });
 
         btnConforme.addEventListener("click", function() {
             studentAnswers[currentSceneId].markedConforme = true;
             btnConforme.disabled = true;
-            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm md:text-base text-center";
+            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed";
             btnConforme.textContent = "🔒 Registrado como Conforme";
-            
-            const emptyState = document.getElementById("empty-state");
-            if (emptyState) emptyState.remove();
-            
+            const empty = document.getElementById("empty-state");
+                        if (empty) empty.remove();
             questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full text-center"><p class="text-sm text-emerald-700 font-semibold">✅ Área validada como libre de anomalías</p></div>`;
-            showNavigationButtons();
+            showNavButtons();
         });
 
-        function showNavigationButtons() {
+        function showNavButtons() {
             if (currentSceneId < 7) btnNext.classList.remove("hidden");
             else btnFinish.classList.remove("hidden");
         }
 
         btnNext.addEventListener("click", () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); });
-        
-        // Generar reporte completo
-        function generateReport() {
+
+        function generateReportHTML() {
             const timestamp = new Date().toLocaleString();
             let html = `<div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl mb-4 border border-amber-200">
                             <p class="text-sm"><strong>👤 Estudiante:</strong> ${studentName}</p>
@@ -473,7 +379,8 @@
                         </div>
                         <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-xs md:text-sm">
-                        <thead><tr class="bg-slate-100"><th class="p-2 md:p-3">Escenario</th><th class="p-2 md:p-3">Criterio</th><th class="p-2 md:p-3">Argumentación</th></tr></thead><tbody>`;
+                        <thead><tr class="bg-slate-100"><th class="p-2 md:p-3">Escenario</th><th class="p-2 md:p-3">Criterio</th><th class="p-2 md:p-3">Argumentación</th></tr></thead>
+                        <tbody>`;
             
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
@@ -498,7 +405,7 @@
                         html += '<span class="text-rose-600">❌ Error grave: No detectó fallas críticas</span>';
                     } else {
                         scene.hotspots.forEach(spot => {
-                            const answer = ans.findings[spot.id] || '⚠️ No respondido';
+                            const answer = ans.findings[spot.id] || '<span class="text-rose-500">⚠️ No respondido</span>';
                             html += `<div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-400">
                                         <strong class="text-slate-700 block text-xs">📍 ${spot.label}</strong>
                                         <p class="text-gray-600 text-xs mt-1">${answer}</p>
@@ -512,54 +419,53 @@
             html += `</tbody></table></div>`;
             return html;
         }
-        
+
         btnFinish.addEventListener("click", function() {
-            document.getElementById("report-content").innerHTML = generateReport();
+            saveResult();
+            document.getElementById("report-content").innerHTML = generateReportHTML();
             document.getElementById("report-student-name").innerHTML = `👤 ${studentName}`;
             document.getElementById("report-modal").classList.remove("hidden");
         });
-        
-        // Función para copiar reporte al portapapeles
+
+        window.closeReportModal = function() {
+            document.getElementById("report-modal").classList.add("hidden");
+        };
+
         window.copyReportToClipboard = function() {
             const reportText = document.getElementById("report-content").innerText;
             navigator.clipboard.writeText(`REPORTE DE AUDITORÍA BPFA\nEstudiante: ${studentName}\nFecha: ${new Date().toLocaleString()}\n\n${reportText}`).then(() => {
                 alert("✅ Reporte copiado al portapapeles");
             }).catch(() => {
-                alert("❌ No se pudo copiar el reporte");
+                alert("❌ No se pudo copiar");
             });
-        }
-        
-        // Función para descargar como JSON
+        };
+
         window.downloadReportAsJSON = function() {
             const reportData = {
                 studentName: studentName,
                 timestamp: new Date().toISOString(),
                 helpsUsed: 3 - availableHelps,
                 totalHelps: 3,
-                answers: studentAnswers,
-                scenes: dataset
+                answers: studentAnswers
             };
-            
             const dataStr = JSON.stringify(reportData, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            const exportFileDefaultName = `auditoria_${studentName.replace(/ /g, '_')}_${new Date().toISOString().slice(0,19)}.json`;
-            
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.setAttribute('download', `auditoria_${studentName.replace(/ /g, '_')}_${new Date().toISOString().slice(0,19)}.json`);
             linkElement.click();
-        }
-        
-        // Función para enviar por email (abre cliente de correo)
+        };
+
         window.sendReportByEmail = function() {
             const subject = `Reporte Auditoría BPFA - ${studentName}`;
             const reportText = document.getElementById("report-content").innerText;
-            const body = `Estudiante: ${studentName}\nFecha: ${new Date().toLocaleString()}\n\n${reportText}\n\n---\nReporte generado automáticamente por Plataforma BPFA`;
+            const body = `Estudiante: ${studentName}\nFecha: ${new Date().toLocaleString()}\n\n${reportText}\n\n---\nReporte generado por Plataforma BPFA`;
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        }
+        };
 
-        window.closeModal = () => document.getElementById("report-modal").classList.add("hidden");
-        document.getElementById("report-modal").addEventListener("click", (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden"); });
+        document.getElementById("report-modal").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeReportModal(); });
+        
+        loadAdminResults();
     </script>
 </body>
 </html>
