@@ -132,7 +132,34 @@
         let currentSceneId = 1, availableHelps = 3, studentName = "";
         const studentAnswers = {};
 
-        const sceneImage = document.getElementById("scene-image"), sceneTitle = document.getElementById("scene-title"), progressText = document.getElementById("progress-text"), pinsOverlay = document.getElementById("pins-overlay"), questionsContainer = document.getElementById("questions-container"), findingsCounter = document.getElementById("findings-counter"), btnConforme = document.getElementById("btn-conforme"), btnNext = document.getElementById("btn-next"), btnFinish = document.getElementById("btn-finish"), btnHelp = document.getElementById("btn-help"), helpCounter = document.getElementById("help-counter"), imgContainer = document.getElementById("image-container"), mainContent = document.getElementById("main-content"), registrationModal = document.getElementById("registration-modal"), studentNameInput = document.getElementById("student-name"), btnStart = document.getElementById("btn-start"), adminPanel = document.getElementById("admin-panel"), btnAdmin = document.getElementById("btn-admin"), adminModal = document.getElementById("admin-modal");
+        // Elementos DOM
+        const sceneImage = document.getElementById("scene-image");
+        const sceneTitle = document.getElementById("scene-title");
+        const progressText = document.getElementById("progress-text");
+        const pinsOverlay = document.getElementById("pins-overlay");
+        const questionsContainer = document.getElementById("questions-container");
+        const findingsCounter = document.getElementById("findings-counter");
+        const btnConforme = document.getElementById("btn-conforme");
+        const btnNext = document.getElementById("btn-next");
+        const btnFinish = document.getElementById("btn-finish");
+        const btnHelp = document.getElementById("btn-help");
+        const helpCounter = document.getElementById("help-counter");
+        const imgContainer = document.getElementById("image-container");
+        const mainContent = document.getElementById("main-content");
+        const registrationModal = document.getElementById("registration-modal");
+        const studentNameInput = document.getElementById("student-name");
+        const btnStart = document.getElementById("btn-start");
+        const adminPanel = document.getElementById("admin-panel");
+        const btnAdmin = document.getElementById("btn-admin");
+        const adminModal = document.getElementById("admin-modal");
+
+        function showNavButtons() {
+            if (currentSceneId < 7) {
+                btnNext.classList.remove("hidden");
+            } else {
+                btnFinish.classList.remove("hidden");
+            }
+        }
 
         function loadAdminResults() {
             const savedResults = localStorage.getItem("bpfa_auditoria_results");
@@ -165,7 +192,7 @@
             for (let sceneId = 1; sceneId <= 7; sceneId++) {
                 const scene = dataset[sceneId];
                 const ans = result.answers[sceneId] || { markedConforme: false, findings: {} };
-                detailHtml += `<tr><td class="p-2 font-medium">${scene.title}</td><td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td><td class="p-2">`;
+                detailHtml += `<tr class="border-b"><td class="p-2 font-medium">${scene.title}</td><td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td><td class="p-2">`;
                 if (!scene.isClean && !ans.markedConforme) { scene.hotspots.forEach(spot => { detailHtml += `<div><strong>${spot.label}:</strong> ${ans.findings[spot.id] || 'No respondido'}</div>`; }); }
                 else if (!scene.isClean && ans.markedConforme) detailHtml += '<span class="text-rose-600">❌ Error: No detectó fallas</span>';
                 else if (scene.isClean && !ans.markedConforme) detailHtml += '<span class="text-rose-600">❌ Falso positivo</span>';
@@ -258,7 +285,7 @@
             helpPin.style.height = "44px";
             helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white text-white font-bold text-sm animate-pulse">?</span>`;
             pinsOverlay.appendChild(helpPin);
-            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}`);
+            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
             setTimeout(() => helpPin.remove(), 4000);
             availableHelps--;
             updateHelpCounter();
@@ -278,7 +305,7 @@
             sceneTitle.textContent = scene.title;
             progressText.textContent = `Escena ${id} de 7`;
             pinsOverlay.innerHTML = "";
-            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 md:py-10 text-gray-400"><p class="font-medium">No has marcado ninguna falla</p><p class="text-xs mt-1">Toca directamente en la imagen</p></div>`;
+            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 md:py-10 text-gray-400"><p class="font-medium">No has marcado ninguna falla</p><p class="text-xs mt-1">Toca directamente en la imagen donde veas anomalías</p></div>`;
             findingsCounter.textContent = "0 hallazgos";
             btnConforme.disabled = false;
             btnConforme.classList.remove("opacity-40");
@@ -307,7 +334,9 @@
                         box.className = "bg-slate-50 p-3 rounded-lg border border-red-200";
                         box.innerHTML = `<label class="block text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-700 mb-2">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded-md text-xs bg-white">${existing[spot.id]}</textarea>`;
                         questionsContainer.appendChild(box);
-                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { studentAnswers[currentSceneId].findings[spot.id] = this.value; });
+                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { 
+                            studentAnswers[currentSceneId].findings[spot.id] = this.value; 
+                        });
                     }
                 });
                 const count = Object.keys(existing).length;
@@ -344,9 +373,15 @@
                 box.className = "bg-slate-50 p-3 rounded-lg border border-red-200";
                 box.innerHTML = `<label class="block text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-700 mb-2">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded-md text-xs bg-white"></textarea>`;
                 questionsContainer.appendChild(box);
-                document.getElementById(`input_${hit.id}`).addEventListener("input", function() { studentAnswers[currentSceneId].findings[hit.id] = this.value; });
-                const newCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
+                document.getElementById(`input_${hit.id}`).addEventListener("input", function() { 
+                    studentAnswers[currentSceneId].findings[hit.id] = this.value; 
+                    const currentCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                    findingsCounter.textContent = `${currentCount} de ${scene.hotspots.length} fallas`;
+                    if (currentCount === scene.hotspots.length) showNavButtons();
+                });
+                const newCount = Object.keys(studentAnswers[currentSceneId].findings).length + 1;
+                findingsCounter.textContent = `${
+                                    findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
                 if (newCount === scene.hotspots.length) showNavButtons();
                 if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
@@ -358,17 +393,16 @@
             btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 px-4 rounded-xl cursor-not-allowed";
             btnConforme.textContent = "🔒 Registrado como Conforme";
             const empty = document.getElementById("empty-state");
-                        if (empty) empty.remove();
+            if (empty) empty.remove();
             questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 w-full text-center"><p class="text-sm text-emerald-700 font-semibold">✅ Área validada como libre de anomalías</p></div>`;
             showNavButtons();
         });
 
-        function showNavButtons() {
-            if (currentSceneId < 7) btnNext.classList.remove("hidden");
-            else btnFinish.classList.remove("hidden");
-        }
-
-        btnNext.addEventListener("click", () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); });
+        btnNext.addEventListener("click", function() { 
+            if (currentSceneId < 7) {
+                loadScene(currentSceneId + 1);
+            }
+        });
 
         function generateReportHTML() {
             const timestamp = new Date().toLocaleString();
@@ -413,10 +447,12 @@
                         });
                     }
                 }
-                html += `</td></tr>`;
+                html += `</div>`; // Cierre del td
+                html += `</td>`;
+                html += `</tr>`;
             }
             
-            html += `</tbody></table></div>`;
+            html += `</tbody>}</div>`;
             return html;
         }
 
@@ -463,7 +499,9 @@
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         };
 
-        document.getElementById("report-modal").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeReportModal(); });
+        document.getElementById("report-modal").addEventListener("click", (e) => { 
+            if (e.target === e.currentTarget) closeReportModal(); 
+        });
         
         loadAdminResults();
     </script>
