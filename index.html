@@ -86,7 +86,7 @@
     </div>
 
     <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
-        <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLATAER INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
+        <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLANTA INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
         <div class="flex gap-3">
             <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">3</span></div>
             <div class="bg-slate-700 px-3 py-1 rounded-lg"><span class="text-xs">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
@@ -164,11 +164,13 @@
 
         // ==================== DATASET ====================
         const dataset = {
-            1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
+            1: { title: "Escena 1: Muelle de Ingreso", isClean: false, image: "assets/escena1.png", hotspots: [
+                { id: "e1_p1", x: 50, y: 82, r: 13, label: "Indumentaria - Color de Botas", q: "¿Por qué las normativas de bioseguridad y BPFA exigen que las botas y el calzado del personal operario sean exclusivamente de color claro en las áreas de recepción de materias primas?" }
+            ] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
                 { id: "e2_p1", x: 23, y: 72, r: 13, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
                 { id: "e2_p2", x: 80, y: 64, r: 13, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
-                { id: "e2_p3", x: 18, y: 55, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+                { id: "e2_p3", x: 48, y: 62, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
             ] },
             3: { title: "Escena 3: Estanterías de Almacenamiento Especial", isClean: false, image: "assets/escena3.png", hotspots: [
                 { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
@@ -177,9 +179,10 @@
             4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
                 { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
+                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
+                { id: "e5_p3", x: 48, y: 45, r: 13, label: "Estructura de Paredes con Moho", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
             ] },
-            6: { title: "Escena 6: Zona de Control de Desperdicios", isClean: false, image: "assets/escena6.png", hotspots: [
+            6: { title: "Escena 6: Área de Residuos (Zona de Desechos)", isClean: false, image: "assets/escena6.png", hotspots: [
                 { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
                 { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "💡 ¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
             ] },
@@ -389,11 +392,18 @@
         function revealNextMissingHotspot() {
             if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return; }
             const scene = dataset[currentSceneId];
-            if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return; }
+            
+            // DESCUENTO EN CUALQUIER SENTIDO: Si la escena está limpia, igual consume el comodín
+            if (scene.isClean) { 
+                availableHelps--;
+                updateHelpCounter();
+                alert(`💡 Ayuda Utilizada\n\n🎯 Esta zona se encuentra bajo total cumplimiento normativo de BPFA. Debes marcarla como Conforme.`); 
+                return; 
+            }
             
             const currentFindings = studentAnswers[currentSceneId]?.findings || {};
             const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
-            if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return; }
+            if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas en esta sección."); return; }
             
             const spot = missing[0];
             const helpPin = document.createElement("div");
@@ -402,7 +412,7 @@
             helpPin.style.top = `${spot.y}%`;
             helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm animate-pulse">?</span>`;
             pinsOverlay.appendChild(helpPin);
-            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
+            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 Hallazgo Oculto: ${spot.label}\n\n🔍 Revisa detalladamente la zona parpadeante en pantalla.`);
             setTimeout(() => helpPin.remove(), 4000);
             availableHelps--;
             updateHelpCounter();
