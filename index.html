@@ -14,10 +14,9 @@
         @media (max-width: 768px) { .hotspot-marker { width: 40px !important; height: 40px !important; } .hotspot-marker span { width: 28px !important; height: 28px !important; font-size: 14px !important; } textarea { font-size: 14px !important; } button { min-height: 48px; } }
         html { scroll-behavior: smooth; }
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
         .password-modal { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(8px); }
+        #main-content { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
@@ -85,7 +84,7 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4" id="main-content" style="display: none;">
+    <main id="main-content" class="flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2">
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
@@ -125,7 +124,7 @@
     </div>
 
     <script>
-        // ==================== FIREBASE - REEMPLAZA CON TUS DATOS ====================
+        // ==================== FIREBASE ====================
         const firebaseConfig = {
             apiKey: "TU_API_KEY",
             authDomain: "TU_AUTH_DOMAIN",
@@ -139,7 +138,7 @@
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET COMPLETO ====================
+        // ==================== DATASET ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -241,7 +240,7 @@
             const results = await loadResultsFromFirebase();
             if (results.length === 0) { document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados</div>'; return; }
             let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</div><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Eliminar</button></div></tr>`; });
+            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</div><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Eliminar</button></div></td>`; });
             html += `</tbody>}</div>`;
             document.getElementById("admin-content").innerHTML = html;
         };
@@ -323,28 +322,21 @@
 
         function showNavButtons() { 
             if (currentSceneId < 7) btnNext.classList.remove("hidden"); 
-            else btnFinish.classList.remove("hidden"); 
+            else btnFinish.classList.remove("hidden); 
         }
 
-        // CORREGIDO: Evento del botón Comenzar
-        btnStart.addEventListener("click", function() {
+        // ========== CORRECCIÓN PRINCIPAL ==========
+        btnStart.onclick = function() {
             studentName = studentNameInput.value.trim();
             if (studentName === "") {
                 alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
-                studentNameInput.focus();
                 return;
             }
             registrationModal.style.display = "none";
             mainContent.style.display = "grid";
             updateHelpCounter();
             loadScene(1);
-        });
-
-        studentNameInput.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                btnStart.click();
-            }
-        });
+        };
 
         function updateHelpCounter() {
             helpCounter.textContent = availableHelps;
@@ -379,11 +371,11 @@
             updateHelpCounter();
         }
 
-        btnHelp.addEventListener("click", () => {
+        btnHelp.onclick = function() {
             if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
             if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
             revealNextMissingHotspot();
-        });
+        };
 
         function loadScene(id) {
             currentSceneId = id;
@@ -453,14 +445,14 @@
                 box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
                 questionsContainer.appendChild(box);
                 document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
-                    studentAnswers
-                                        studentAnswers[currentSceneId].findings[hit.id] = this.value;
+                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
                     const count = Object.keys(studentAnswers[currentSceneId].findings).length;
                     findingsCounter.textContent = `${count} de ${scene.hotspots.length} fallas`;
                     if (count === scene.hotspots.length) showNavButtons();
                 });
                 const newCount = Object.keys(studentAnswers[currentSceneId].findings).length + 1;
-                findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
+                findingsCounter.textContent = `${newCount} de ${
+                                    findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
                 if (newCount === scene.hotspots.length) showNavButtons();
                 if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
@@ -487,6 +479,7 @@
                             📅 ${new Date().toLocaleString()}<br>
                             🎯 Ayudas utilizadas: ${3 - availableHelps} de 3
                         </div>
+                        <div class="overflow-x-auto">
                         <table class="w-full text-sm border-collapse">
                             <thead>
                                 <tr class="bg-slate-100">
@@ -501,30 +494,30 @@
                 const scene = dataset[id];
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
                 html += `<tr class="border-b">
-                            <td class="p-2">${scene.title}</td>
+                            <td class="p-2 font-medium">${scene.title}</td>
                             <td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td>
                             <td class="p-2">`;
                 
                 if (scene.isClean) {
                     if (ans.markedConforme) {
-                        html += '✨ Correcto: Validó zona sin fallas';
+                        html += '<span class="text-emerald-600">✨ Correcto: Validó zona sin fallas</span>';
                     } else {
-                        html += '❌ Error: Reportó fallas donde no existen';
+                        html += '<span class="text-rose-600">❌ Error: Reportó fallas donde no existen</span>';
                     }
                 } else if (ans.markedConforme) {
-                    html += '❌ Error grave: No detectó fallas críticas';
+                    html += '<span class="text-rose-600">❌ Error grave: No detectó fallas críticas</span>';
                 } else {
                     scene.hotspots.forEach(s => {
                         const respuesta = ans.findings[s.id] || '⚠️ No respondido';
-                        html += `<div class="bg-gray-50 p-2 mb-2 rounded">
-                                    <strong>📍 ${s.label}</strong><br>
-                                    ${respuesta}
+                        html += `<div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-400">
+                                    <strong class="text-slate-700">📍 ${s.label}</strong><br>
+                                    <span class="text-gray-600 text-xs">${respuesta}</span>
                                 </div>`;
                     });
                 }
                 html += `</td></tr>`;
             }
-            html += `</tbody></table>`;
+            html += `</tbody></table></div>`;
             return html;
         }
 
