@@ -57,7 +57,7 @@
     </div>
 
     <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
-        <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLATAER INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección</p></div>
+        <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLATAER INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
         <div class="flex gap-3">
             <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">3</span></div>
             <div class="bg-slate-700 px-3 py-1 rounded-lg"><span class="text-xs">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
@@ -75,17 +75,17 @@
                     <img id="scene-image" src="" class="w-full h-auto block">
                     <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
                 </div>
-                <div class="p-2 bg-gray-50 text-xs text-center">📱 Toca donde identifiques anomalías</div>
+                <div class="p-2 bg-gray-50 text-xs text-center">📱 Toca o haz clic en las áreas donde identifiques anomalías</div>
             </div>
         </div>
         <div class="flex flex-col gap-4">
             <div class="bg-white p-4 rounded-xl shadow-lg">
-                <h3 class="font-bold border-b pb-2">📋 Criterio</h3>
-                <p class="text-xs mt-2">Analiza el entorno. Si cumple completamente, presiona el botón.</p>
+                <h3 class="font-bold border-b pb-2">📋 Criterio de Estación</h3>
+                <p class="text-xs mt-2">Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.</p>
                 <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3">✅ Marcar como Conforme</button>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-lg flex-1">
-                <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0</span></h3>
+                <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0 hallazgos</span></h3>
                 <div id="questions-container" class="mt-3 space-y-3 max-h-[280px] overflow-y-auto">
                     <div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>
                 </div>
@@ -97,43 +97,80 @@
 
     <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0"><div><h2 class="font-bold text-amber-400">REPORTE</h2><p id="report-student-name" class="text-xs"></p></div><button onclick="closeReportModal()" class="text-white text-2xl">&times;</button></div>
+            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0"><div><h2 class="font-bold text-amber-400">REPORTE DE AUDITORÍA</h2><p id="report-student-name" class="text-xs"></p></div><button onclick="closeReportModal()" class="text-white text-2xl">&times;</button></div>
             <div class="p-4" id="report-content"></div>
-            <div class="p-3 bg-gray-50 border-t flex justify-end gap-2"><button onclick="copyReportToClipboard()" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm">📋 Copiar</button><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Guardar PDF</button></div>
+            <div class="p-3 bg-gray-50 border-t flex justify-end gap-2"><button onclick="copyReportToClipboard()" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm">📋 Copiar Reporte</button><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Guardar PDF</button></div>
         </div>
     </div>
 
     <script>
+        // DATASET CON TUS TEXTOS ORIGINALES
         const dataset = {
-            1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
-            2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
-                { id: "e2_p1", x: 23, y: 72, r: 13, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos?" },
-                { id: "e2_p2", x: 80, y: 64, r: 13, label: "Estiba Dañada", q: "¿Por qué es peligroso?" },
-                { id: "e2_p3", x: 18, y: 55, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal?" }
-            ] },
-            3: { title: "Escena 3: Estanterías", isClean: false, image: "assets/escena3.png", hotspots: [
-                { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución incorrecta", q: "¿Por qué es un error?" },
-                { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame medicado", q: "¿Qué consecuencias trae?" }
-            ] },
-            4: { title: "Escena 4: Dosificación", isClean: true, image: "assets/escena4.png", hotspots: [] },
-            5: { title: "Escena 5: Techado", isClean: false, image: "assets/escena5.png", hotspots: [
-                { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "¿Por qué compromete la calidad?" },
-                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta", q: "¿Qué peligro físico corre?" }
-            ] },
-            6: { title: "Escena 6: Desperdicios", isClean: false, image: "assets/escena6.png", hotspots: [
-                { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto", q: "¿Problemas de bioseguridad?" },
-                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas en suelo", q: "¿Cuál es el error?" }
-            ] },
-            7: { title: "Escena 7: Despacho", isClean: false, image: "assets/escena7.png", hotspots: [
-                { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto", q: "¿Qué norma se incumple?" },
-                { id: "e7_p2", x: 12, y: 68, r: 13, label: "Falta hermeticidad", q: "¿Falla grave?" },
-                { id: "e7_p3", x: 14, y: 84, r: 13, label: "Trampa rota", q: "¿Medida correctiva?" }
-            ] }
+            1: {
+                title: "Escena 1: Muelle de Ingreso",
+                isClean: true,
+                image: "assets/escena1.png",
+                hotspots: []
+            },
+            2: {
+                title: "Escena 2: Pasillos de Almacenamiento A",
+                isClean: false,
+                image: "assets/escena2.png",
+                hotspots: [
+                    { id: "e2_p1", x: 23, y: 72, r: 13, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
+                    { id: "e2_p2", x: 80, y: 64, r: 13, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
+                    { id: "e2_p3", x: 18, y: 55, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+                ]
+            },
+            3: {
+                title: "Escena 3: Estanterías de Almacenamiento Especial",
+                isClean: false,
+                image: "assets/escena3.png",
+                hotspots: [
+                    { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
+                    { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
+                ]
+            },
+            4: {
+                title: "Escena 4: Área de Dosificación y Pesaje",
+                isClean: true,
+                image: "assets/escena4.png",
+                hotspots: []
+            },
+            5: {
+                title: "Escena 5: Infraestructura Alta (Techado)",
+                isClean: false,
+                image: "assets/escena5.png",
+                hotspots: [
+                    { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
+                    { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
+                ]
+            },
+            6: {
+                title: "Escena 6: Zona de Control de Desperdicios",
+                isClean: false,
+                image: "assets/escena6.png",
+                hotspots: [
+                    { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
+                    { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+                ]
+            },
+            7: {
+                title: "Escena 7: Área de Despacho Perimetral",
+                isClean: false,
+                image: "assets/escena7.png",
+                hotspots: [
+                    { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
+                    { id: "e7_p2", x: 12, y: 68, r: 13, label: "Luz inferior en estructura de puerta", q: "En la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
+                    { id: "e7_p3", x: 14, y: 84, r: 13, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+                ]
+            }
         };
 
         let currentSceneId = 1, availableHelps = 3, studentName = "";
         const studentAnswers = {};
 
+        // Elementos DOM
         const sceneImage = document.getElementById("scene-image");
         const sceneTitle = document.getElementById("scene-title");
         const progressText = document.getElementById("progress-text");
@@ -175,7 +212,7 @@
             results.slice().reverse().forEach(r => {
                 html += `<tr class="border-b"><td class="p-2">${r.studentName}</td><td class="p-2 text-xs">${new Date(r.timestamp).toLocaleString()}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewDetail(${r.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult(${r.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Eliminar</button></td></tr>`;
             });
-            html += `</tbody>}</div>`;
+            html += `</tbody></table>`;
             document.getElementById("admin-content").innerHTML = html;
             adminModal.classList.remove("hidden");
         };
@@ -197,7 +234,7 @@
         };
 
         window.deleteResult = function(id) {
-            if (!confirm("¿Eliminar?")) return;
+            if (!confirm("¿Eliminar este resultado?")) return;
             let results = JSON.parse(localStorage.getItem("bpfa_auditoria_results"));
             results = results.filter(r => r.id !== id);
             localStorage.setItem("bpfa_auditoria_results", JSON.stringify(results));
@@ -231,13 +268,13 @@
             if (data) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = `resultados_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
         });
 
-        document.getElementById("btn-clear-all").addEventListener("click", () => { if (confirm("¿Eliminar todos?")) { localStorage.removeItem("bpfa_auditoria_results"); adminPanel.classList.add("hidden"); showAdminPanel(); } });
+        document.getElementById("btn-clear-all").addEventListener("click", () => { if (confirm("⚠️ ¿Eliminar TODOS los resultados?")) { localStorage.removeItem("bpfa_auditoria_results"); adminPanel.classList.add("hidden"); showAdminPanel(); } });
         document.getElementById("btn-close-admin").addEventListener("click", () => adminModal.classList.add("hidden"));
         btnAdmin.addEventListener("click", showAdminPanel);
 
         btnStart.addEventListener("click", () => {
             studentName = studentNameInput.value.trim();
-            if (!studentName) { alert("Ingresa tu nombre"); return; }
+            if (!studentName) { alert("⚠️ Por favor, ingresa tu nombre completo"); return; }
             registrationModal.style.display = "none";
             mainContent.style.display = "grid";
             updateHelpCounter();
@@ -249,6 +286,35 @@
             if (availableHelps === 0) { btnHelp.disabled = true; btnHelp.classList.add("opacity-50"); btnHelp.textContent = "💔 Sin Ayudas"; }
             else { btnHelp.disabled = false; btnHelp.classList.remove("opacity-50"); btnHelp.textContent = "💡 Ayuda"; }
         }
+
+        function revealNextMissingHotspot() {
+            if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return null; }
+            const scene = dataset[currentSceneId];
+            if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return null; }
+            const currentFindings = studentAnswers[currentSceneId]?.findings || {};
+            const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
+            if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return null; }
+            const spot = missing[0];
+            const helpPin = document.createElement("div");
+            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full flex items-center justify-center pointer-events-none z-40";
+            helpPin.style.left = `${spot.x}%`;
+            helpPin.style.top = `${spot.y}%`;
+            helpPin.style.width = "44px";
+            helpPin.style.height = "44px";
+            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center border-2 border-white text-white font-bold text-sm animate-pulse">?</span>`;
+            pinsOverlay.appendChild(helpPin);
+            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
+            setTimeout(() => helpPin.remove(), 4000);
+            availableHelps--;
+            updateHelpCounter();
+            return spot;
+        }
+
+        btnHelp.addEventListener("click", () => {
+            if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
+            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
+            revealNextMissingHotspot();
+        });
 
         function loadScene(id) {
             currentSceneId = id;
@@ -283,7 +349,7 @@
                         pinsOverlay.appendChild(pin);
                         const box = document.createElement("div");
                         box.className = "bg-slate-50 p-2 rounded border border-red-200";
-                        box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><textarea id="input_${spot.id}" rows="2" class="w-full p-1 border rounded text-xs mt-1">${existing[spot.id]}</textarea>`;
+                        box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-600 mt-1">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white">${existing[spot.id]}</textarea>`;
                         questionsContainer.appendChild(box);
                         document.getElementById(`input_${spot.id}`).addEventListener("input", function() { studentAnswers[currentSceneId].findings[spot.id] = this.value; });
                     }
@@ -319,7 +385,7 @@
                 pinsOverlay.appendChild(pin);
                 const box = document.createElement("div");
                 box.className = "bg-slate-50 p-2 rounded border border-red-200";
-                box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-1 border rounded text-xs mt-1"></textarea>`;
+                box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
                 questionsContainer.appendChild(box);
                 document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
                     studentAnswers[currentSceneId].findings[hit.id] = this.value;
@@ -327,8 +393,10 @@
                     findingsCounter.textContent = `${count} de ${scene.hotspots.length} fallas`;
                     if (count === scene.hotspots.length) showNavButtons();
                 });
-                findingsCounter.textContent = `${Object.keys(studentAnswers[currentSceneId].findings).length + 1} de ${scene.hotspots.length} fallas`;
-                if (Object.keys(studentAnswers[currentSceneId].findings).length + 1 === scene.hotspots.length) showNavButtons();
+                const newCount = Object.keys(studentAnswers[currentSceneId].findings).length + 1;
+                findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
+                if (newCount === scene.hotspots.length) showNavButtons();
+                if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
         });
 
@@ -346,24 +414,24 @@
         btnNext.addEventListener("click", () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); });
 
         function generateReportHTML() {
-            let html = `<div class="p-3 bg-amber-50 rounded mb-4"><strong>👤 ${studentName}</strong><br>📅 ${new Date().toLocaleString()}<br>🎯 Ayudas: ${3 - availableHelps}/3</div><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-100"><th class="p-2">Escena</th><th class="p-2">Criterio</th><th class="p-2">Detalle</th></tr></thead><tbody>`;
+            let html = `<div class="p-3 bg-amber-50 rounded mb-4"><strong>👤 ${studentName}</strong><br>📅 ${new Date().toLocaleString()}<br>🎯 Ayudas utilizadas: ${3 - availableHelps} de 3</div><table class="w-full text-sm border-collapse"><thead><tr class="bg-slate-100"><th class="p-2">Escenario</th><th class="p-2">Criterio</th><th class="p-2">Argumentación</th></tr></thead><tbody>`;
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
                 html += `<tr class="border-b"><td class="p-2">${scene.title}</td><td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td><td class="p-2">`;
-                if (scene.isClean) html += ans.markedConforme ? '✨ Correcto' : '❌ Error: Falso positivo';
-                else if (ans.markedConforme) html += '❌ Error: No detectó fallas';
-                else scene.hotspots.forEach(s => { html += `<div><strong>${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
+                if (scene.isClean) html += ans.markedConforme ? '✨ Correcto: Validó zona sin fallas' : '❌ Error: Reportó fallas donde no existen';
+                else if (ans.markedConforme) html += '❌ Error grave: No detectó fallas críticas';
+                else scene.hotspots.forEach(s => { html += `<div class="bg-gray-50 p-2 mb-2 rounded"><strong>📍 ${s.label}</strong><br>${ans.findings[s.id] || '⚠️ No respondido'}</div>`; });
                 html += `</td></tr>`;
             }
-            html += `</tbody>}</div>`;
+            html += `</tbody></table>`;
             return html;
         }
 
         btnFinish.addEventListener("click", () => { saveResult(); document.getElementById("report-content").innerHTML = generateReportHTML(); document.getElementById("report-student-name").innerHTML = `👤 ${studentName}`; document.getElementById("report-modal").classList.remove("hidden"); });
 
         window.closeReportModal = () => document.getElementById("report-modal").classList.add("hidden");
-        window.copyReportToClipboard = () => { navigator.clipboard.writeText(document.getElementById("report-content").innerText); alert("✅ Copiado"); };
+        window.copyReportToClipboard = () => { navigator.clipboard.writeText(document.getElementById("report-content").innerText); alert("✅ Reporte copiado al portapapeles"); };
 
         const saved = localStorage.getItem("bpfa_auditoria_results");
         if (saved && JSON.parse(saved).length > 0) adminPanel.classList.remove("hidden");
