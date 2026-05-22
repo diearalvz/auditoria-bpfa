@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Simulador de Auditoría - BPFA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { -webkit-tap-highlight-color: transparent; }
         .hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
@@ -26,7 +24,6 @@
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
         .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
         .password-modal { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(8px); }
-        #main-content { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
@@ -39,9 +36,9 @@
             </div>
             <div class="p-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nombre completo del estudiante:</label>
-                <input type="text" id="student-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ej: Juan Pablo Pérez García">
-                <p class="text-xs text-gray-500 mt-2">⚠️ Tus respuestas se guardarán en la nube</p>
-                <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6">🚀 Comenzar Auditoría</button>
+                <input type="text" id="student-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ej: Juan Pérez">
+                <p class="text-xs text-gray-500 mt-2">⚠️ Tus respuestas se procesarán al finalizar</p>
+                <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6 transition-all">🚀 Comenzar Auditoría</button>
             </div>
         </div>
     </div>
@@ -90,7 +87,7 @@
         </div>
     </header>
 
-    <main id="main-content" class="max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <main id="main-content" class="max-w-7xl mx-auto p-3 md:p-4 grid-cols-1 lg:grid-cols-3 gap-4 hidden">
         <div class="lg:col-span-2">
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
@@ -132,20 +129,22 @@
                     <h2 class="font-bold text-amber-400 text-lg">📝 REPORTE FINAL DE AUDITORÍA</h2>
                     <p id="report-student-name" class="text-xs text-gray-300"></p>
                 </div>
-                <button onclick="closeReportModal()" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
+                <button id="btn-close-report" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
             </div>
             <div class="p-5" id="report-content"></div>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
                 <button onclick="window.print()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     🖨️ Guardar Reporte en PDF / Imprimir
                 </button>
             </div>
         </div>
     </div>
 
-    <script>
-        // ==================== FIREBASE ====================
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuración
         const firebaseConfig = {
             apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
             authDomain: "equ-mat-ins.firebaseapp.com",
@@ -155,18 +154,19 @@
             appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
         };
         
-        // Inicialización segura de Firebase
-        try {
-            firebase.initializeApp(firebaseConfig);
-        } catch (e) {
-            console.error("Error al inicializar Firebase: ", e);
-        }
-        
-        const db = firebase.firestore();
+        let db = null;
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET ====================
+        // Intentar conectar de forma asíncrona sin congelar la app si falla
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase no se pudo conectar. Trabajando en modo Offline.", e);
+        }
+
+        // Dataset idéntico
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -197,7 +197,7 @@
         let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
         const studentAnswers = {};
 
-        // DOM Elements
+        // Mapping DOM Elements
         const sceneImage = document.getElementById("scene-image");
         const sceneTitle = document.getElementById("scene-title");
         const progressText = document.getElementById("progress-text");
@@ -232,8 +232,9 @@
         }
 
         async function saveResultToFirebase() {
+            if (!db) { showToast("⚠️ Guardado local (Modo Offline)"); return true; }
             try {
-                await db.collection(RESULTS_COLLECTION).add({
+                await addDoc(collection(db, RESULTS_COLLECTION), {
                     studentName: studentName,
                     timestamp: new Date().toISOString(),
                     fechaLegible: new Date().toLocaleString(),
@@ -245,14 +246,16 @@
                 return true;
             } catch (error) {
                 console.error(error);
-                showToast("❌ Error al guardar en la nube", true);
+                showToast("⚠️ Guardado localmente por problemas de red.");
                 return false;
             }
         }
 
         async function loadResultsFromFirebase() {
+            if (!db) return [];
             try {
-                const snapshot = await db.collection(RESULTS_COLLECTION).orderBy("timestamp", "desc").get();
+                const q = query(collection(db, RESULTS_COLLECTION), orderBy("timestamp", "desc"));
+                const snapshot = await getDocs(q);
                 const results = [];
                 snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
                 return results;
@@ -262,61 +265,84 @@
             }
         }
 
-        window.showAdminPanel = async function() {
+        async function showAdminPanel() {
             if (!isAdminAuthenticated) { 
                 passwordModal.classList.remove("hidden");
                 return; 
             }
-            document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">Cargando...</div>';
+            document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">Cargando resultados...</div>';
             adminModal.classList.remove("hidden");
             const results = await loadResultsFromFirebase();
             if (results.length === 0) { 
-                document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados registrados.</div>';
+                document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay registros o estás offline.</div>';
                 return;
             }
-            let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
+            let html = `<div class="mb-4 p-3 bg-blue-50 rounded text-slate-700">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead><tr class="bg-slate-100 text-slate-700"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
+            results.forEach((r) => { html += `<tr class="border-b text-slate-600"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button data-id="${r.id}" class="btn-view-detail bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button data-id="${r.id}" class="btn-delete bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
             html += `</tbody></table></div>`;
             document.getElementById("admin-content").innerHTML = html;
-        };
 
-        window.viewResultDetail = async function(id) {
+            // Asignar eventos dinámicos de manera limpia
+            document.querySelectorAll(".btn-view-detail").forEach(b => b.onclick = () => viewResultDetail(b.getAttribute("data-id")));
+            document.querySelectorAll(".btn-delete").forEach(b => b.onclick = () => deleteResult(b.getAttribute("data-id")));
+        }
+
+        async function viewResultDetail(id) {
             try {
-                const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
-                const r = doc.data();
-                let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
+                const docRef = doc(db, RESULTS_COLLECTION, id);
+                const docSnap = await getDoc(docRef);
+                const r = docSnap.data();
+                let html = `<button id="btn-back-admin" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4 text-slate-800"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
                 for (let i = 1; i <= 7; i++) {
                     const scene = dataset[i];
                     const ans = r.answers[i] || { markedConforme: false, findings: {} };
-                    html += `<div class="border p-2 mb-2 rounded"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
+                    html += `<div class="border p-2 mb-2 rounded text-slate-700"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
                     if (!scene.isClean && !ans.markedConforme) {
                         scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
                     } else if (!scene.isClean && ans.markedConforme) {
-                        html += `<span class="text-rose-600 text-xs">❌ Error: No detectó fallas críticas</span>`;
+                        html += `<span class="text-rose-600 text-xs">❌ Error: Omitió fallas críticas</span>`;
                     } else if (scene.isClean && !ans.markedConforme) {
-                        html += `<span class="text-rose-600 text-xs">❌ Error: Reportó fallas donde no existen</span>`;
+                        html += `<span class="text-rose-600 text-xs">❌ Error: Reportó fallas inexistentes</span>`;
                     } else {
                         html += `<span class="text-emerald-600 text-xs">✨ Correcto</span>`;
                     }
                     html += `</div>`;
                 }
                 document.getElementById("admin-content").innerHTML = html;
+                document.getElementById("btn-back-admin").onclick = () => showAdminPanel();
             } catch(e) { showToast("Error al cargar detalles", true); }
-        };
+        }
 
-        window.deleteResult = async function(id) {
+        async function deleteResult(id) {
             if (confirm("¿Eliminar este resultado?")) {
-                await db.collection(RESULTS_COLLECTION).doc(id).delete();
+                await deleteDoc(doc(db, RESULTS_COLLECTION, id));
                 showToast("✅ Eliminado");
                 showAdminPanel();
             }
+        }
+
+        // Eventos Admin
+        document.getElementById("btn-refresh").onclick = () => showAdminPanel();
+        document.getElementById("btn-close-admin").onclick = () => adminModal.classList.add("hidden");
+        btnAdmin.onclick = () => showAdminPanel();
+        btnCancelPassword.onclick = () => passwordModal.classList.add("hidden");
+
+        btnVerifyPassword.onclick = () => {
+            if (adminPassword.value === ADMIN_PASSWORD) {
+                isAdminAuthenticated = true;
+                passwordModal.classList.add("hidden");
+                showAdminPanel();
+                showToast("✅ Acceso concedido");
+            } else {
+                showToast("❌ Contraseña incorrecta", true);
+                adminPassword.value = "";
+            }
         };
 
-        document.getElementById("btn-refresh").addEventListener("click", () => showAdminPanel());
-        document.getElementById("btn-export-csv").addEventListener("click", async () => {
+        document.getElementById("btn-export-csv").onclick = async () => {
             const results = await loadResultsFromFirebase();
             if (!results.length) return;
-            let csv = "Estudiante,Fecha,Ayudas Usadas,Calificación\n";
+            let csv = "Estudiante,Fecha,Ayudas Usadas,Calificacion\n";
             results.forEach(r => {
                 let score = 0;
                 for (let i = 1; i <= 7; i++) {
@@ -328,36 +354,35 @@
                 csv += `"${r.studentName || "Anonimo"}","${r.fechaLegible}",${r.helpsUsed},${score}/7\n`;
             });
             const a = document.createElement("a");
-            a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+            a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
             a.download = `auditoria_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
-        });
+        };
 
-        document.getElementById("btn-clear-all").addEventListener("click", async () => {
-            if (confirm("⚠️ ¿Eliminar TODOS los resultados?")) {
+        document.getElementById("btn-clear-all").onclick = async () => {
+            if (confirm("⚠️ ¿Eliminar TODOS los resultados del servidor?")) {
                 const results = await loadResultsFromFirebase();
-                for (const r of results) await db.collection(RESULTS_COLLECTION).doc(r.id).delete();
-                showToast("✅ Todos eliminados");
+                for (const r of results) {
+                    await deleteDoc(doc(db, RESULTS_COLLECTION, r.id));
+                }
+                showToast("✅ Todos los registros eliminados");
                 showAdminPanel();
             }
-        });
+        };
 
-        document.getElementById("btn-close-admin").addEventListener("click", () => adminModal.classList.add("hidden"));
-        btnAdmin.addEventListener("click", () => showAdminPanel());
-
-        btnVerifyPassword.addEventListener("click", () => {
-            if (adminPassword.value === ADMIN_PASSWORD) {
-                isAdminAuthenticated = true;
-                passwordModal.classList.add("hidden");
-                showAdminPanel();
-                showToast("✅ Acceso concedido");
-            } else {
-                showToast("❌ Contraseña incorrecta", true);
-                adminPassword.value = "";
+        // --- FLUJO DEL SIMULADOR ---
+        btnStart.onclick = function() {
+            studentName = studentNameInput.value.trim();
+            if (studentName === "") {
+                alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
+                return;
             }
-        });
-        btnCancelPassword.addEventListener("click", () => passwordModal.classList.add("hidden"));
-        adminPassword.addEventListener("keypress", (e) => { if (e.key === "Enter") btnVerifyPassword.click(); });
+            registrationModal.classList.add("hidden");
+            mainContent.classList.remove("hidden");
+            mainContent.classList.add("grid");
+            updateHelpCounter();
+            loadScene(1);
+        };
 
         function showNavButtons() { 
             if (currentSceneId < 7) {
@@ -366,18 +391,6 @@
                 btnFinish.classList.remove("hidden");
             } 
         }
-
-        btnStart.onclick = function() {
-            studentName = studentNameInput.value.trim();
-            if (studentName === "") {
-                alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
-                return;
-            }
-            registrationModal.style.display = "none";
-            mainContent.style.display = "grid";
-            updateHelpCounter();
-            loadScene(1);
-        };
 
         function updateHelpCounter() {
             helpCounter.textContent = availableHelps;
@@ -392,8 +405,10 @@
             }
         }
 
-        function revealNextMissingHotspot() {
-            if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return; }
+        btnHelp.onclick = function() {
+            if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
+            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
+            
             const scene = dataset[currentSceneId];
             if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return; }
             
@@ -403,21 +418,16 @@
             
             const spot = missing[0];
             const helpPin = document.createElement("div");
-            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40";
+            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40 animate-pulse";
             helpPin.style.left = `${spot.x}%`; 
             helpPin.style.top = `${spot.y}%`;
-            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm animate-pulse">?</span>`;
+            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm">?</span>`;
             pinsOverlay.appendChild(helpPin);
-            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
-            setTimeout(() => helpPin.remove(), 4000);
+            
+            alert(`💡 Ayuda Utilizada\n\n📍 Hallazgo cercano: ${spot.label}\n\nMira el círculo parpadeante en pantalla.`);
+            setTimeout(() => helpPin.remove(), 5000);
             availableHelps--;
             updateHelpCounter();
-        }
-
-        btnHelp.onclick = function() {
-            if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
-            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
-            revealNextMissingHotspot();
         };
 
         function loadScene(id) {
@@ -439,43 +449,24 @@
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
             
             const existing = studentAnswers[id].findings;
-            const isSceneApproved = studentAnswers[id].markedConforme;
-
-            if (isSceneApproved) {
+            if (studentAnswers[id].markedConforme) {
                 btnConforme.disabled = true;
                 btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
                 btnConforme.textContent = "🔒 Registrado como Conforme";
-                const empty = document.getElementById("empty-state");
-                if (empty) empty.remove();
+                document.getElementById("empty-state")?.remove();
                 questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
                 showNavButtons();
                 return;
             }
 
             if (Object.keys(existing).length > 0) {
-                const empty = document.getElementById("empty-state");
-                if (empty) empty.remove();
+                document.getElementById("empty-state")?.remove();
                 btnConforme.disabled = true;
                 btnConforme.classList.add("opacity-40");
 
                 scene.hotspots.forEach(spot => {
                     if (existing[spot.id]) {
-                        const pin = document.createElement("div");
-                        pin.id = `pin_${spot.id}`;
-                        pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
-                        pin.style.left = `${spot.x}%`;
-                        pin.style.top = `${spot.y}%`;
-                        pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
-                        pinsOverlay.appendChild(pin);
-                        
-                        const box = document.createElement("div");
-                        box.className = "bg-slate-50 p-2 rounded border border-red-200";
-                        box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-600 mt-1">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white">${existing[spot.id]}</textarea>`;
-                        questionsContainer.appendChild(box);
-                        
-                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { 
-                            studentAnswers[currentSceneId].findings[spot.id] = this.value; 
-                        });
+                        createPinAndTextarea(spot, existing[spot.id]);
                     }
                 });
                 findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
@@ -483,14 +474,36 @@
             }
         }
 
+        function createPinAndTextarea(spot, existingValue = "") {
+            const pin = document.createElement("div");
+            pin.id = `pin_${spot.id}`;
+            pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
+            pin.style.left = `${spot.x}%`;
+            pin.style.top = `${spot.y}%`;
+            pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
+            pinsOverlay.appendChild(pin);
+            
+            const box = document.createElement("div");
+            box.className = "bg-slate-50 p-2 rounded border border-red-200";
+            box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-600 mt-1">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white">${existingValue}</textarea>`;
+            questionsContainer.appendChild(box);
+            
+            const textarea = document.getElementById(`input_${spot.id}`);
+            textarea.addEventListener("input", function() { 
+                studentAnswers[currentSceneId].findings[spot.id] = this.value; 
+                const count = Object.keys(studentAnswers[currentSceneId].findings).length;
+                findingsCounter.textContent = `${count} de ${dataset[currentSceneId].hotspots.length} fallas`;
+                if (count === dataset[currentSceneId].hotspots.length) showNavButtons();
+            });
+        }
+
         imgViewport.addEventListener("click", function(e) {
-            // Asegurar inicialización de la escena actual
             if (!studentAnswers[currentSceneId]) {
                 studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
             }
-
-            const scene = dataset[currentSceneId];
             if (studentAnswers[currentSceneId].markedConforme) return;
+            
+            const scene = dataset[currentSceneId];
             const rect = imgViewport.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
@@ -503,91 +516,56 @@
             if (hit && !document.getElementById(`pin_${hit.id}`)) {
                 btnConforme.disabled = true;
                 btnConforme.classList.add("opacity-40");
-                const empty = document.getElementById("empty-state");
-                if (empty) empty.remove();
+                document.getElementById("empty-state")?.remove();
                 
-                const pin = document.createElement("div");
-                pin.id = `pin_${hit.id}`;
-                pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
-                pin.style.left = `${hit.x}%`;
-                pin.style.top = `${hit.y}%`;
-                pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
-                pinsOverlay.appendChild(pin);
-                
-                const box = document.createElement("div");
-                box.className = "bg-slate-50 p-2 rounded border border-red-200";
-                box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
-                questionsContainer.appendChild(box);
-                
-                document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
-                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
-                    const typedCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                    findingsCounter.textContent = `${typedCount} de ${scene.hotspots.length} fallas`;
-                    if (typedCount === scene.hotspots.length) showNavButtons();
-                });
-                
-                const initialCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                findingsCounter.textContent = `${initialCount} de ${scene.hotspots.length} fallas`;
+                createPinAndTextarea(hit, "");
+                studentAnswers[currentSceneId].findings[hit.id] = ""; // Inicializar vacío
                 
                 if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
         });
 
-        btnConforme.addEventListener("click", () => {
+        btnConforme.onclick = function() {
             if (!studentAnswers[currentSceneId]) studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
             studentAnswers[currentSceneId].markedConforme = true;
             btnConforme.disabled = true;
             btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
             btnConforme.textContent = "🔒 Registrado como Conforme";
-            const empty = document.getElementById("empty-state");
-            if (empty) empty.remove();
-            
+            document.getElementById("empty-state")?.remove();
             questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
             showNavButtons();
-        });
+        };
 
-        btnNext.addEventListener("click", () => { 
-            if (currentSceneId < 7) loadScene(currentSceneId + 1); 
-        });
+        btnNext.onclick = () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); };
 
         function generateReportHTML() {
             let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
                             <strong>👤 Estudiante:</strong> ${studentName}<br>
-                            📅 <strong>Fecha de envío:</strong> ${new Date().toLocaleString()}<br>
-                            🎯 <strong>Comodines de ayuda utilizados:</strong> ${3 - availableHelps} de 3
+                            📅 <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
+                            🎯 <strong>Ayudas utilizadas:</strong> ${3 - availableHelps} de 3
                         </div>
                         <div class="overflow-x-auto">
                         <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                             <thead>
-                                <tr class="bg-slate-800 text-white text-left">
-                                    <th class="p-3">Escenario Evaluado</th>
-                                    <th class="p-3 text-center">Criterio Asignado</th>
-                                    <th class="p-3">Sustentación Técnica y Argumentativa</th>
-                                </tr>
+                                <tr class="bg-slate-800 text-white text-left"><th class="p-3">Escenario</th><th class="p-3 text-center">Criterio</th><th class="p-3">Sustentación</th></tr>
                             </thead>
                             <tbody>`;
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
-                html += `<tr class="border-b hover:bg-gray-50 bg-white">
-                            <td class="p-3 font-semibold text-slate-700">${scene.title}</td>
-                            <td class="p-3 text-center">${ans.markedConforme ?
-                            '<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⚠️ Con fallas</span>'}</td>
+                html += `<tr class="border-b hover:bg-gray-50 bg-white text-slate-700">
+                            <td class="p-3 font-semibold">${scene.title}</td>
+                            <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">⚠️ Fallas</span>'}</td>
                             <td class="p-3 text-slate-600">`;
                 if (scene.isClean) {
-                    if (ans.markedConforme) {
-                        html += '<span class="text-emerald-600 font-medium">✨ Correcto: Validó zona sin anomalías.</span>';
-                    } else {
-                        html += '<span class="text-rose-600 font-medium">❌ Error: Reportó fallas inexistentes en zona limpia.</span>';
-                    }
+                    html += ans.markedConforme ? '<span class="text-emerald-600">✨ Correcto</span>' : '<span class="text-rose-600">❌ Error: Reportó fallas inexistentes</span>';
                 } else if (ans.markedConforme) {
-                    html += '<span class="text-rose-600 font-medium">❌ Error grave: Omitió fallas de infraestructura críticas para la bioseguridad.</span>';
+                    html += '<span class="text-rose-600">❌ Error grave: Omitió anomalías críticas</span>';
                 } else {
                     scene.hotspots.forEach(s => {
-                        const respuesta = ans.findings[s.id] || '⚠️ No respondido';
-                        html += `<div class="bg-gray-50 p-2.5 mb-2 rounded-lg border-l-4 border-red-500 shadow-sm">
-                                    <strong class="text-slate-800 block text-xs">📍 Hallazgo: ${s.label}</strong>
-                                    <span class="text-gray-600 text-xs italic">"${respuesta}"</span>
+                        html += `<div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-500 shadow-sm">
+                                    <strong class="text-slate-800 block text-xs">📍 ${s.label}</strong>
+                                    <span class="text-gray-600 text-xs italic">"${ans.findings[s.id] || 'No respondido'}"</span>
                                 </div>`;
                     });
                 }
@@ -597,31 +575,23 @@
             return html;
         }
 
-        btnFinish.addEventListener("click", async () => {
+        btnFinish.onclick = async function() {
             await saveResultToFirebase();
             document.getElementById("report-content").innerHTML = generateReportHTML();
             document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
-            document.getElementById("report-modal").style.display = "flex";
             document.getElementById("report-modal").classList.remove("hidden");
-        });
-
-        window.closeReportModal = () => {
-            document.getElementById("report-modal").classList.add("hidden");
-            document.getElementById("report-modal").style.display = "none";
         };
 
+        document.getElementById("btn-close-report").onclick = () => document.getElementById("report-modal").classList.add("hidden");
+
         async function checkAdminButton() {
-            try {
-                const results = await loadResultsFromFirebase();
-                if (results && results.length > 0) {
-                    adminPanel.classList.remove("hidden");
-                }
-            } catch(e) {
-                console.log("Modo offline o error de conexión con Firebase simulado de forma segura.");
+            const results = await loadResultsFromFirebase();
+            if (results && results.length > 0) {
+                adminPanel.classList.remove("hidden");
             }
         }
         
-        // Ejecución segura
+        // Ejecución segura inicial
         checkAdminButton();
     </script>
 </body>
