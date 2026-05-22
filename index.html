@@ -12,14 +12,13 @@
         .hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } }
         
-        /* Ajustes específicos para móviles */
         @media (max-width: 768px) { 
             .hotspot-marker { width: 44px !important; height: 44px !important; } 
             .hotspot-marker span { width: 32px !important; height: 32px !important; font-size: 16px !important; } 
             textarea { font-size: 14px !important; } 
             button { min-height: 48px; } 
             #image-viewport {
-                min-width: 650px;
+                min-width: 800px; /* Asegura un tamaño base óptimo para scroll en móviles */
                 position: relative;
             }
         }
@@ -113,16 +112,24 @@
         <div class="flex flex-col gap-4">
             <div class="bg-white p-4 rounded-xl shadow-lg">
                 <h3 class="font-bold border-b pb-2">📋 Criterio de Estación</h3>
-                <p class="text-xs mt-2">Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.</p>
+                <p class="text-xs mt-2">Analiza el entorno visual. Si consideras que esta zona cumple con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.</p>
                 <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3">✅ Marcar como Conforme</button>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-lg flex-1">
-                <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0 hallazgos</span></h3>
-                <div id="questions-container" class="mt-3 space-y-3 max-h-[280px] overflow-y-auto">
-                    <div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>
+            <div class="bg-white p-4 rounded-xl shadow-lg flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0 hallazgos</span></h3>
+                    <div id="questions-container" class="mt-3 space-y-3 max-h-[240px] overflow-y-auto">
+                        <div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>
+                    </div>
                 </div>
-                <button id="btn-next" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl mt-3 hidden">Siguiente Escena ➡️</button>
-                <button id="btn-finish" class="w-full bg-amber-500 text-slate-900 font-bold py-3 rounded-xl mt-3 hidden">💾 Finalizar Auditoría</button>
+                
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <div class="flex gap-2">
+                        <button id="btn-prev" class="w-1/2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-xl transition-all hidden">⬅️ Anterior</button>
+                        <button id="btn-next" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all">Siguiente Escena ➡️</button>
+                    </div>
+                    <button id="btn-finish" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 rounded-xl mt-2 hidden shadow-md">💾 Finalizar Auditoría</button>
+                </div>
             </div>
         </div>
     </main>
@@ -134,12 +141,11 @@
                     <h2 class="font-bold text-amber-400 text-lg">📝 REPORTE FINAL DE AUDITORÍA</h2>
                     <p id="report-student-name" class="text-xs text-gray-300"></p>
                 </div>
-                <button onclick="closeReportModal()" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
+                <button id="btn-close-report" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
             </div>
             <div class="p-5" id="report-content"></div>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
                 <button onclick="window.print()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     🖨️ Guardar Reporte en PDF / Imprimir
                 </button>
             </div>
@@ -161,39 +167,39 @@
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET (UBICACIONES CALIBRADAS SEGÚN TUS CAPTURAS) ====================
+        // ==================== DATASET (UBICACIONES CORREGIDAS AL 100%) ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: false, image: "assets/escena1.png", hotspots: [
-                { id: "e1_p1", x: 64, y: 88, r: 12, label: "Indumentaria - Color de Botas", q: "¿Por qué las normativas de bioseguridad y BPFA exigen que las botas y el calzado del personal operario sean exclusivamente de color claro en las áreas de recepción de materias primas?" }
+                { id: "e1_p1", x: 64, y: 88, r: 8, label: "Indumentaria - Color de Botas", q: "¿Por qué las normativas de bioseguridad y BPFA exigen que las botas y el calzado del personal operario sean exclusivamente de color claro en las áreas de recepción de materias primas?" }
             ] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
-                { id: "e2_p1", x: 23, y: 72, r: 11, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
-                { id: "e2_p2", x: 80, y: 64, r: 11, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
-                { id: "e2_p3", x: 52, y: 54, r: 12, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+                { id: "e2_p1", x: 23, y: 72, r: 7, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
+                { id: "e2_p2", x: 80, y: 64, r: 7, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
+                { id: "e2_p3", x: 53, y: 55, r: 7, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
             ] },
             3: { title: "Escena 3: Estanterías de Almacenamiento Especial", isClean: false, image: "assets/escena3.png", hotspots: [
-                { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
-                { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
+                { id: "e3_p1", x: 30, y: 18, r: 8, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
+                { id: "e3_p2", x: 62, y: 32, r: 8, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
             ] },
             4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
-                { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
-                { id: "e5_p3", x: 88, y: 46, r: 12, label: "Estructura de Paredes con Moho", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
+                { id: "e5_p1", x: 20, y: 15, r: 8, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
+                { id: "e5_p2", x: 74, y: 16, r: 8, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
+                { id: "e5_p3", x: 88, y: 46, r: 8, label: "Estructura de Paredes con Moho", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
             ] },
             6: { title: "Escena 6: Área de Residuos (Zona de Desechos)", isClean: false, image: "assets/escena6.png", hotspots: [
-                { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
-                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "💡 ¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+                { id: "e6_p1", x: 45, y: 55, r: 8, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
+                { id: "e6_p2", x: 70, y: 68, r: 8, label: "Herramientas de aseo en el suelo", q: "💡 ¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
             ] },
             7: { title: "Escena 7: Área de Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
-                { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
-                { id: "e7_p2", x: 12, y: 68, r: 13, label: "Luz inferior en estructura de puerta", q: "En la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
-                { id: "e7_p3", x: 14, y: 84, r: 13, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+                { id: "e7_p1", x: 45, y: 25, r: 8, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
+                { id: "e7_p2", x: 12, y: 68, r: 8, label: "Luz inferior en estructura de puerta", q: "En la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
+                { id: "e7_p3", x: 14, y: 84, r: 8, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
             ] }
         };
 
         let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
-        const studentAnswers = {};
+        let studentAnswers = {};
 
         // DOM Elements
         const sceneImage = document.getElementById("scene-image");
@@ -203,6 +209,7 @@
         const questionsContainer = document.getElementById("questions-container");
         const findingsCounter = document.getElementById("findings-counter");
         const btnConforme = document.getElementById("btn-conforme");
+        const btnPrev = document.getElementById("btn-prev");
         const btnNext = document.getElementById("btn-next");
         const btnFinish = document.getElementById("btn-finish");
         const btnHelp = document.getElementById("btn-help");
@@ -219,6 +226,7 @@
         const adminPassword = document.getElementById("admin-password");
         const btnVerifyPassword = document.getElementById("btn-verify-password");
         const btnCancelPassword = document.getElementById("btn-cancel-password");
+        const btnCloseReport = document.getElementById("btn-close-report");
 
         function showToast(msg, isError = false) { 
             const t = document.createElement("div");
@@ -353,15 +361,6 @@
         });
 
         btnCancelPassword.addEventListener("click", () => passwordModal.classList.add("hidden"));
-        adminPassword.addEventListener("keypress", (e) => { if (e.key === "Enter") btnVerifyPassword.click(); });
-
-        function showNavButtons() { 
-            if (currentSceneId < 7) {
-                btnNext.classList.remove("hidden");
-            } else {
-                btnFinish.classList.remove("hidden");
-            } 
-        }
 
         btnStart.onclick = function() {
             studentName = studentNameInput.value.trim();
@@ -371,6 +370,7 @@
             }
             registrationModal.style.display = "none";
             mainContent.style.display = "grid";
+            availableHelps = 3;
             updateHelpCounter();
             loadScene(1);
         };
@@ -392,7 +392,6 @@
             if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return; }
             const scene = dataset[currentSceneId];
             
-            // DESCUENTO AUTOMÁTICO UNIVERSAL
             if (scene.isClean) { 
                 availableHelps--;
                 updateHelpCounter();
@@ -406,10 +405,10 @@
             
             const spot = missing[0];
             const helpPin = document.createElement("div");
-            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40";
+            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40 hotspot-marker";
             helpPin.style.left = `${spot.x}%`; 
             helpPin.style.top = `${spot.y}%`;
-            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm animate-pulse">?</span>`;
+            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm">?</span>`;
             pinsOverlay.appendChild(helpPin);
             alert(`💡 Ayuda utilizada.\n\n📍 Hallazgo Oculto: ${spot.label}\n\n🔍 Revisa detalladamente la zona resaltada en pantalla.`);
             setTimeout(() => helpPin.remove(), 4000);
@@ -430,14 +429,30 @@
             sceneTitle.textContent = scene.title;
             progressText.textContent = `Escena ${id} de 7`;
             pinsOverlay.innerHTML = "";
-            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>`;
+            questionsContainer.innerHTML = "";
             findingsCounter.textContent = "0 hallazgos";
+            
+            // Gestión visual de botones de navegación libre
+            if (currentSceneId === 1) {
+                btnPrev.classList.add("hidden");
+                btnNext.classList.remove("hidden");
+                btnNext.classList.replace("w-1/2", "w-full");
+                btnFinish.classList.add("hidden");
+            } else if (currentSceneId === 7) {
+                btnPrev.classList.remove("hidden");
+                btnNext.classList.add("hidden");
+                btnFinish.classList.remove("hidden");
+            } else {
+                btnPrev.classList.remove("hidden");
+                btnNext.classList.remove("hidden");
+                btnNext.classList.replace("w-full", "w-1/2");
+                btnFinish.classList.add("hidden");
+            }
+
+            // Habilitación o deshabilitación del botón conforme
             btnConforme.disabled = false;
-            btnConforme.classList.remove("opacity-40", "bg-slate-400");
-            btnConforme.classList.add("bg-emerald-600", "hover:bg-emerald-700");
+            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3 transition-all";
             btnConforme.textContent = "✅ Marcar como Conforme";
-            btnNext.classList.add("hidden");
-            btnFinish.classList.add("hidden");
             
             document.getElementById("scroll-wrapper").scrollLeft = 0;
             
@@ -448,49 +463,57 @@
 
             if (isSceneApproved) {
                 btnConforme.disabled = true;
-                btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+                btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
                 btnConforme.textContent = "🔒 Registrado como Conforme";
-                const empty = document.getElementById("empty-state");
-                if (empty) empty.remove();
-                questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
-                showNavButtons();
+                questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700 text-xs font-semibold">✅ Área validada como libre de anomalías</div>`;
+                findingsCounter.textContent = "0 de 0 fallas";
                 return;
             }
 
             if (Object.keys(existing).length > 0) {
-                const empty = document.getElementById("empty-state");
-                if (empty) empty.remove();
                 btnConforme.disabled = true;
                 btnConforme.classList.add("opacity-40");
 
                 scene.hotspots.forEach(spot => {
                     if (existing[spot.id]) {
-                        const pin = document.createElement("div");
-                        pin.id = `pin_${spot.id}`;
-                        pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
-                        pin.style.left = `${spot.x}%`;
-                        pin.style.top = `${spot.y}%`;
-                        pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
-                        pinsOverlay.appendChild(pin);
-                        
-                        const box = document.createElement("div");
-                        box.className = "bg-slate-50 p-2 rounded border border-red-200";
-                        box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-600 mt-1">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white">${existing[spot.id]}</textarea>`;
-                        questionsContainer.appendChild(box);
-                        
-                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { 
-                            studentAnswers[currentSceneId].findings[spot.id] = this.value; 
-                        });
+                        createVisualPin(spot);
+                        createQuestionBox(spot, existing[spot.id]);
                     }
                 });
                 findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
-                if (Object.keys(existing).length === scene.hotspots.length) showNavButtons();
+            } else {
+                questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 text-gray-400 text-xs">No has marcado ninguna falla</div>`;
             }
+        }
+
+        function createVisualPin(spot) {
+            const pin = document.createElement("div");
+            pin.id = `pin_${spot.id}`;
+            pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none hotspot-marker";
+            pin.style.left = `${spot.x}%`;
+            pin.style.top = `${spot.y}%`;
+            pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold">!</span>`;
+            pinsOverlay.appendChild(pin);
+        }
+
+        function createQuestionBox(spot, currentValue = "") {
+            const empty = document.getElementById("empty-state");
+            if (empty) empty.remove();
+
+            const box = document.createElement("div");
+            box.className = "bg-slate-50 p-2 rounded border border-red-200 shadow-sm";
+            box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-[11px] text-gray-600 mt-0.5">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white focus:ring-1 focus:ring-red-400 outline-none" placeholder="Escribe aquí tu hallazgo técnico...">${currentValue}</textarea>`;
+            questionsContainer.appendChild(box);
+            
+            document.getElementById(`input_${spot.id}`).addEventListener("input", function() { 
+                studentAnswers[currentSceneId].findings[spot.id] = this.value; 
+            });
         }
 
         imgViewport.addEventListener("click", function(e) {
             const scene = dataset[currentSceneId];
             if (studentAnswers[currentSceneId].markedConforme) return;
+            
             const rect = imgViewport.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
@@ -503,31 +526,13 @@
             if (hit && !document.getElementById(`pin_${hit.id}`)) {
                 btnConforme.disabled = true;
                 btnConforme.classList.add("opacity-40");
-                const empty = document.getElementById("empty-state");
-                if (empty) empty.remove();
                 
-                const pin = document.createElement("div");
-                pin.id = `pin_${hit.id}`;
-                pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
-                pin.style.left = `${hit.x}%`;
-                pin.style.top = `${hit.y}%`;
-                pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
-                pinsOverlay.appendChild(pin);
+                studentAnswers[currentSceneId].findings[hit.id] = ""; 
+                createVisualPin(hit);
+                createQuestionBox(hit, "");
                 
-                const box = document.createElement("div");
-                box.className = "bg-slate-50 p-2 rounded border border-red-200";
-                box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
-                questionsContainer.appendChild(box);
-                
-                document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
-                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
-                    const typedCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                    findingsCounter.textContent = `${typedCount} de ${scene.hotspots.length} fallas`;
-                    if (typedCount === scene.hotspots.length) showNavButtons();
-                });
-                
-                const initialCount = Object.keys(studentAnswers[currentSceneId].findings).length;
-                findingsCounter.textContent = `${initialCount} de ${scene.hotspots.length} fallas`;
+                const typedCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                findingsCounter.textContent = `${typedCount} de ${scene.hotspots.length} fallas`;
                 
                 if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
@@ -535,24 +540,19 @@
 
         btnConforme.addEventListener("click", () => {
             studentAnswers[currentSceneId].markedConforme = true;
-            btnConforme.disabled = true;
-            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
-            btnConforme.textContent = "🔒 Registrado como Conforme";
-            const empty = document.getElementById("empty-state");
-            if (empty) empty.remove();
-            questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
-            showNavButtons();
+            studentAnswers[currentSceneId].findings = {}; 
+            pinsOverlay.innerHTML = "";
+            loadScene(currentSceneId);
         });
 
-        btnNext.addEventListener("click", () => { 
-            if (currentSceneId < 7) loadScene(currentSceneId + 1); 
-        });
+        btnPrev.addEventListener("click", () => { if (currentSceneId > 1) loadScene(currentSceneId - 1); });
+        btnNext.addEventListener("click", () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); });
 
         function generateReportHTML() {
             let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
                             <strong>👤 Estudiante:</strong> ${studentName}<br>
                             📅 <strong>Fecha de envío:</strong> ${new Date().toLocaleString()}<br>
-                            🎯 <strong>Comodines de ayuda utilizados:</strong> ${3 - availableHelps} de 3
+                            🎯 <strong>Comodines utilizados:</strong> ${3 - availableHelps} de 3
                         </div>
                         <div class="overflow-x-auto">
                         <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
@@ -573,20 +573,30 @@
                             <td class="p-3 text-slate-600">`;
                 if (scene.isClean) {
                     if (ans.markedConforme) {
-                        html += '<span class="text-emerald-600 font-medium">✨ Correcto: Validó zona sin anomalías.</span>';
+                        html += '<span class="text-emerald-600 font-medium text-xs">✨ Correcto: Validó zona sin anomalías.</span>';
                     } else {
-                        html += '<span class="text-rose-600 font-medium">❌ Error: Reportó fallas inexistentes en zona limpia.</span>';
+                        html += '<span class="text-rose-600 font-medium text-xs">❌ Error: Reportó fallas inexistentes en zona limpia.</span>';
                     }
                 } else if (ans.markedConforme) {
-                    html += '<span class="text-rose-600 font-medium">❌ Error grave: Omitió fallas de infraestructura críticas para la bioseguridad.</span>';
+                    html += '<span class="text-rose-600 font-medium text-xs">❌ Error grave: Omitió fallas de infraestructura críticas para la bioseguridad.</span>';
                 } else {
-                    scene.hotspots.forEach(s => {
-                        const respuesta = ans.findings[s.id] || '⚠️ No respondido';
-                        html += `<div class="bg-gray-50 p-2.5 mb-2 rounded-lg border-l-4 border-red-500 shadow-sm">
-                                    <strong class="text-slate-800 block text-xs">📍 Hallazgo: ${s.label}</strong>
-                                    <span class="text-gray-600 text-xs italic">"${respuesta}"</span>
-                                </div>`;
-                    });
+                    const keys = Object.keys(ans.findings);
+                    if (keys.length === 0) {
+                        html += '<span class="text-amber-600 font-medium text-xs">⚠️ Declaró la escena con fallas pero no marcó ninguna anomalía visual.</span>';
+                    } else {
+                        scene.hotspots.forEach(s => {
+                            if (ans.findings[s.id] !== undefined) {
+                                const respuesta = ans.findings[s.id].trim() || '⚠️ El estudiante dejó el campo vacío sin sustentación.';
+                                html += `<div class="bg-gray-50 p-2.5 mb-2 rounded-lg border-l-4 border-red-500 shadow-sm">
+                                            <strong class="text-slate-800 block text-xs">📍 Hallazgo Detectado: ${s.label}</strong>
+                                            <span class="text-gray-600 text-xs italic">"${respuesta}"</span>
+                                        </div>`;
+                            }
+                        });
+                        if (keys.length < scene.hotspots.length) {
+                            html += `<span class="text-amber-500 block text-xs font-semibold mt-1">⚠️ El alumno omitió ${scene.hotspots.length - keys.length} falla(s) crítica(s) en esta estación.</span>`;
+                        }
+                    }
                 }
                 html += `</td></tr>`;
             }
@@ -595,6 +605,9 @@
         }
 
         btnFinish.addEventListener("click", async () => {
+            const confirmar = confirm("¿Estás seguro de que deseas finalizar tu auditoría y enviar los datos?");
+            if (!confirmar) return;
+            
             await saveResultToFirebase();
             document.getElementById("report-content").innerHTML = generateReportHTML();
             document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
@@ -602,9 +615,23 @@
             document.getElementById("report-modal").classList.remove("hidden");
         });
 
-        window.closeReportModal = () => {
+        // REINICIO AUTOMÁTICO AL CERRAR REPORTE
+        btnCloseReport.onclick = function() {
             document.getElementById("report-modal").classList.add("hidden");
             document.getElementById("report-modal").style.display = "none";
+            
+            // Reset de variables
+            studentAnswers = {};
+            studentName = "";
+            studentNameInput.value = "";
+            currentSceneId = 1;
+            availableHelps = 3;
+            
+            // Cambio de interfaz a la pantalla de Login/Registro
+            mainContent.style.display = "none";
+            registrationModal.style.display = "flex";
+            showToast("🔄 Sesión finalizada. Sistema listo para un nuevo estudiante.");
+            checkAdminButton();
         };
 
         async function checkAdminButton() {
