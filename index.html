@@ -18,7 +18,7 @@
             textarea { font-size: 14px !important; } 
             button { min-height: 48px; } 
             #image-viewport {
-                min-width: 800px; /* Asegura un tamaño base óptimo para scroll en móviles */
+                min-width: 800px;
                 position: relative;
             }
         }
@@ -153,7 +153,6 @@
     </div>
 
     <script>
-        // ==================== FIREBASE ====================
         const firebaseConfig = {
             apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
             authDomain: "equ-mat-ins.firebaseapp.com",
@@ -167,15 +166,15 @@
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET (UBICACIONES CORREGIDAS AL 100%) ====================
+        // ==================== COORDENADAS CORREGIDAS SEGÚN IMÁGENES ORIGINALES IMPREGNADAS ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: false, image: "assets/escena1.png", hotspots: [
-                { id: "e1_p1", x: 64, y: 88, r: 8, label: "Indumentaria - Color de Botas", q: "¿Por qué las normativas de bioseguridad y BPFA exigen que las botas y el calzado del personal operario sean exclusivamente de color claro en las áreas de recepción de materias primas?" }
+                { id: "e1_p1", x: 16, y: 25, r: 8, label: "Indumentaria - Color de Botas", q: "¿Por qué las normativas de bioseguridad y BPFA exigen que las botas y el calzado del personal operario sean exclusivamente de color claro en las áreas de recepción de materias primas?" }
             ] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
-                { id: "e2_p1", x: 23, y: 72, r: 7, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
-                { id: "e2_p2", x: 80, y: 64, r: 7, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
-                { id: "e2_p3", x: 53, y: 55, r: 7, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+                { id: "e2_p1", x: 6, y: 48, r: 6, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
+                { id: "e2_p2", x: 93, y: 53, r: 6, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
+                { id: "e2_p3", x: 43, y: 40, r: 8, label: "Franja de Seguridad en Columna", q: "¿Por qué es de vital importancia mantener las estructuras, pasillos y columnas de soporte señalizadas y libres de arrumes u obstáculos según las BPFA?" }
             ] },
             3: { title: "Escena 3: Estanterías de Almacenamiento Especial", isClean: false, image: "assets/escena3.png", hotspots: [
                 { id: "e3_p1", x: 30, y: 18, r: 8, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
@@ -183,9 +182,9 @@
             ] },
             4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
-                { id: "e5_p1", x: 20, y: 15, r: 8, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 8, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
-                { id: "e5_p3", x: 88, y: 46, r: 8, label: "Estructura de Paredes con Moho", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
+                { id: "e5_p1", x: 8, y: 18, r: 6, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
+                { id: "e5_p2", x: 74, y: 16, r: 6, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
+                { id: "e5_p3", x: 64, y: 80, r: 10, label: "Estructura de Paredes con Moho", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
             ] },
             6: { title: "Escena 6: Área de Residuos (Zona de Desechos)", isClean: false, image: "assets/escena6.png", hotspots: [
                 { id: "e6_p1", x: 45, y: 55, r: 8, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
@@ -201,7 +200,6 @@
         let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
         let studentAnswers = {};
 
-        // DOM Elements
         const sceneImage = document.getElementById("scene-image");
         const sceneTitle = document.getElementById("scene-title");
         const progressText = document.getElementById("progress-text");
@@ -432,7 +430,6 @@
             questionsContainer.innerHTML = "";
             findingsCounter.textContent = "0 hallazgos";
             
-            // Gestión visual de botones de navegación libre
             if (currentSceneId === 1) {
                 btnPrev.classList.add("hidden");
                 btnNext.classList.remove("hidden");
@@ -449,7 +446,6 @@
                 btnFinish.classList.add("hidden");
             }
 
-            // Habilitación o deshabilitación del botón conforme
             btnConforme.disabled = false;
             btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3 transition-all";
             btnConforme.textContent = "✅ Marcar como Conforme";
@@ -615,19 +611,16 @@
             document.getElementById("report-modal").classList.remove("hidden");
         });
 
-        // REINICIO AUTOMÁTICO AL CERRAR REPORTE
         btnCloseReport.onclick = function() {
             document.getElementById("report-modal").classList.add("hidden");
             document.getElementById("report-modal").style.display = "none";
             
-            // Reset de variables
             studentAnswers = {};
             studentName = "";
             studentNameInput.value = "";
             currentSceneId = 1;
             availableHelps = 3;
             
-            // Cambio de interfaz a la pantalla de Login/Registro
             mainContent.style.display = "none";
             registrationModal.style.display = "flex";
             showToast("🔄 Sesión finalizada. Sistema listo para un nuevo estudiante.");
