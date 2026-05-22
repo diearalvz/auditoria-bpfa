@@ -242,7 +242,7 @@
                 return;
             }
             let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
+            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
             html += `</tbody></table></div>`;
             document.getElementById("admin-content").innerHTML = html;
         };
@@ -250,7 +250,7 @@
         window.viewResultDetail = async function(id) {
             const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
             const r = doc.data();
-            let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4"><p><strong>👤 ${r.studentName}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
+            let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
             for (let i = 1; i <= 7; i++) {
                 const scene = dataset[i];
                 const ans = r.answers[i] || { markedConforme: false, findings: {} };
@@ -290,7 +290,7 @@
                     if (scene.isClean && ans.markedConforme) score++;
                     if (!scene.isClean && !ans.markedConforme && Object.keys(ans.findings).length === scene.hotspots.length) score++;
                 }
-                csv += `"${r.studentName}","${r.fechaLegible}",${r.helpsUsed},${score}/7\n`;
+                csv += `"${r.studentName || "Anonimo"}","${r.fechaLegible}",${r.helpsUsed},${score}/7\n`;
             });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -396,7 +396,8 @@
             questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>`;
             findingsCounter.textContent = "0 hallazgos";
             btnConforme.disabled = false;
-            btnConforme.classList.remove("opacity-40");
+            btnConforme.classList.remove("opacity-40", "bg-slate-400");
+            btnConforme.classList.add("bg-emerald-600", "hover:bg-emerald-700");
             btnConforme.textContent = "✅ Marcar como Conforme";
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
@@ -404,9 +405,25 @@
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
             
             const existing = studentAnswers[id].findings;
+            const isSceneApproved = studentAnswers[id].markedConforme;
+
+            if (isSceneApproved) {
+                btnConforme.disabled = true;
+                btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+                btnConforme.textContent = "🔒 Registrado como Conforme";
+                const empty = document.getElementById("empty-state");
+                if (empty) empty.remove();
+                questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
+                showNavButtons();
+                return;
+            }
+
             if (Object.keys(existing).length > 0) {
                 const empty = document.getElementById("empty-state");
                 if (empty) empty.remove();
+                btnConforme.disabled = true;
+                btnConforme.classList.add("opacity-40");
+
                 scene.hotspots.forEach(spot => {
                     if (existing[spot.id]) {
                         const pin = document.createElement("div");
@@ -429,10 +446,6 @@
                 });
                 findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
                 if (Object.keys(existing).length === scene.hotspots.length) showNavButtons();
-            }
-            if(scene.hotspots.length === 0) {
-                // Escenas limpias habilitan avanzar de inmediato si se marca conforme
-                showNavButtons();
             }
         }
 
@@ -467,7 +480,6 @@
                 box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
                 questionsContainer.appendChild(box);
                 
-                // Registro y verificación en tiempo real al escribir
                 document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
                     studentAnswers[currentSceneId].findings[hit.id] = this.value;
                     const typedCount = Object.keys(studentAnswers[currentSceneId].findings).length;
@@ -499,7 +511,7 @@
 
         function generateReportHTML() {
             let html = `<div class="p-3 bg-amber-50 rounded mb-4">
-                            <strong>👤 ${studentName}</strong><br>
+                            <strong>👤 Estudiante: ${studentName}</strong><br>
                             📅 ${new Date().toLocaleString()}<br>
                             🎯 Ayudas utilizadas: ${3 - availableHelps} de 3
                         </div>
@@ -546,7 +558,7 @@
         btnFinish.addEventListener("click", async () => {
             await saveResultToFirebase();
             document.getElementById("report-content").innerHTML = generateReportHTML();
-            document.getElementById("report-student-name").innerHTML = `👤 ${studentName}`;
+            document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
             document.getElementById("report-modal").style.display = "flex";
             document.getElementById("report-modal").classList.remove("hidden");
         });
