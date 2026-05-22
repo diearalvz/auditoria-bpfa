@@ -21,7 +21,6 @@
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
 
-    <!-- Modal de Registro -->
     <div id="registration-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
             <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
@@ -37,10 +36,9 @@
         </div>
     </div>
 
-    <!-- Modal Contraseña Admin -->
     <div id="password-modal" class="fixed inset-0 password-modal z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
-            <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
+             <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
                 <h2 class="text-2xl font-bold text-amber-400">🔒 Acceso Restringido</h2>
                 <p class="text-sm text-gray-300">Panel de Administrador</p>
             </div>
@@ -53,14 +51,12 @@
         </div>
     </div>
 
-    <!-- Botón Admin -->
     <div id="admin-panel" class="fixed bottom-4 right-4 z-40 hidden">
         <button id="btn-admin" class="bg-slate-800 hover:bg-slate-900 text-white rounded-full p-3 shadow-lg transition-all">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
         </button>
     </div>
 
-    <!-- Modal Admin -->
     <div id="admin-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
             <div class="bg-slate-800 text-white p-5 rounded-t-2xl flex justify-between items-center sticky top-0">
@@ -126,14 +122,13 @@
     <script>
         // ==================== FIREBASE ====================
         const firebaseConfig = {
-  apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
-  authDomain: "equ-mat-ins.firebaseapp.com",
-  projectId: "equ-mat-ins",
-  storageBucket: "equ-mat-ins.firebasestorage.app",
-  messagingSenderId: "357351478133",
-  appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
+            apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
+            authDomain: "equ-mat-ins.firebaseapp.com",
+            projectId: "equ-mat-ins",
+            storageBucket: "equ-mat-ins.firebasestorage.app",
+            messagingSenderId: "357351478133",
+            appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const RESULTS_COLLECTION = "auditoria_resultados";
@@ -196,12 +191,12 @@
         const btnCancelPassword = document.getElementById("btn-cancel-password");
 
         function showToast(msg, isError = false) { 
-            const t = document.createElement("div"); 
+            const t = document.createElement("div");
             t.className = "toast-notification"; 
             t.style.background = isError ? "#dc2626" : "#1e293b"; 
             t.textContent = msg; 
             document.body.appendChild(t); 
-            setTimeout(() => t.remove(), 3000); 
+            setTimeout(() => t.remove(), 3000);
         }
 
         async function saveResultToFirebase() {
@@ -235,14 +230,20 @@
         }
 
         window.showAdminPanel = async function() {
-            if (!isAdminAuthenticated) { passwordModal.classList.remove("hidden"); return; }
+            if (!isAdminAuthenticated) { 
+                passwordModal.classList.remove("hidden");
+                return; 
+            }
             document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">Cargando...</div>';
             adminModal.classList.remove("hidden");
             const results = await loadResultsFromFirebase();
-            if (results.length === 0) { document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados</div>'; return; }
+            if (results.length === 0) { 
+                document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados</div>'; 
+                return;
+            }
             let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</div><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Eliminar</button></div></td>`; });
-            html += `</tbody>}</div>`;
+            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
+            html += `</tbody></table></div>`;
             document.getElementById("admin-content").innerHTML = html;
         };
 
@@ -296,6 +297,7 @@
             a.download = `auditoria_${new Date().toISOString().slice(0,10)}.csv`;
             a.click();
         });
+
         document.getElementById("btn-clear-all").addEventListener("click", async () => {
             if (confirm("⚠️ ¿Eliminar TODOS los resultados?")) {
                 const results = await loadResultsFromFirebase();
@@ -304,6 +306,7 @@
                 showAdminPanel();
             }
         });
+
         document.getElementById("btn-close-admin").addEventListener("click", () => adminModal.classList.add("hidden"));
         btnAdmin.addEventListener("click", () => showAdminPanel());
 
@@ -318,15 +321,18 @@
                 adminPassword.value = "";
             }
         });
+
         btnCancelPassword.addEventListener("click", () => passwordModal.classList.add("hidden"));
         adminPassword.addEventListener("keypress", (e) => { if (e.key === "Enter") btnVerifyPassword.click(); });
 
         function showNavButtons() { 
-            if (currentSceneId < 7) btnNext.classList.remove("hidden"); 
-            else btnFinish.classList.remove("hidden); 
+            if (currentSceneId < 7) {
+                btnNext.classList.remove("hidden");
+            } else {
+                btnFinish.classList.remove("hidden");
+            } 
         }
 
-        // ========== CORRECCIÓN PRINCIPAL ==========
         btnStart.onclick = function() {
             studentName = studentNameInput.value.trim();
             if (studentName === "") {
@@ -348,7 +354,7 @@
             } else { 
                 btnHelp.disabled = false; 
                 btnHelp.classList.remove("opacity-50"); 
-                btnHelp.textContent = "💡 Ayuda"; 
+                btnHelp.textContent = "💡 Ayuda";
             }
         }
 
@@ -356,9 +362,11 @@
             if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return; }
             const scene = dataset[currentSceneId];
             if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return; }
+            
             const currentFindings = studentAnswers[currentSceneId]?.findings || {};
             const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
             if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return; }
+            
             const spot = missing[0];
             const helpPin = document.createElement("div");
             helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40";
@@ -392,8 +400,9 @@
             btnConforme.textContent = "✅ Marcar como Conforme";
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
+            
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
-
+            
             const existing = studentAnswers[id].findings;
             if (Object.keys(existing).length > 0) {
                 const empty = document.getElementById("empty-state");
@@ -407,15 +416,23 @@
                         pin.style.top = `${spot.y}%`;
                         pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
                         pinsOverlay.appendChild(pin);
+                        
                         const box = document.createElement("div");
                         box.className = "bg-slate-50 p-2 rounded border border-red-200";
                         box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-600 mt-1">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white">${existing[spot.id]}</textarea>`;
                         questionsContainer.appendChild(box);
-                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { studentAnswers[currentSceneId].findings[spot.id] = this.value; });
+                        
+                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { 
+                            studentAnswers[currentSceneId].findings[spot.id] = this.value; 
+                        });
                     }
                 });
                 findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
                 if (Object.keys(existing).length === scene.hotspots.length) showNavButtons();
+            }
+            if(scene.hotspots.length === 0) {
+                // Escenas limpias habilitan avanzar de inmediato si se marca conforme
+                showNavButtons();
             }
         }
 
@@ -425,15 +442,18 @@
             const rect = imgContainer.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+            
             let hit = null;
             for (let spot of scene.hotspots) {
                 if (Math.hypot(clickX - spot.x, clickY - spot.y) <= spot.r) { hit = spot; break; }
             }
+            
             if (hit && !document.getElementById(`pin_${hit.id}`)) {
                 btnConforme.disabled = true;
                 btnConforme.classList.add("opacity-40");
                 const empty = document.getElementById("empty-state");
                 if (empty) empty.remove();
+                
                 const pin = document.createElement("div");
                 pin.id = `pin_${hit.id}`;
                 pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
@@ -441,20 +461,23 @@
                 pin.style.top = `${hit.y}%`;
                 pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
                 pinsOverlay.appendChild(pin);
+                
                 const box = document.createElement("div");
                 box.className = "bg-slate-50 p-2 rounded border border-red-200";
                 box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
                 questionsContainer.appendChild(box);
+                
+                // Registro y verificación en tiempo real al escribir
                 document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
                     studentAnswers[currentSceneId].findings[hit.id] = this.value;
-                    const count = Object.keys(studentAnswers[currentSceneId].findings).length;
-                    findingsCounter.textContent = `${count} de ${scene.hotspots.length} fallas`;
-                    if (count === scene.hotspots.length) showNavButtons();
+                    const typedCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                    findingsCounter.textContent = `${typedCount} de ${scene.hotspots.length} fallas`;
+                    if (typedCount === scene.hotspots.length) showNavButtons();
                 });
-                const newCount = Object.keys(studentAnswers[currentSceneId].findings).length + 1;
-                findingsCounter.textContent = `${newCount} de ${
-                                    findingsCounter.textContent = `${newCount} de ${scene.hotspots.length} fallas`;
-                if (newCount === scene.hotspots.length) showNavButtons();
+                
+                const initialCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                findingsCounter.textContent = `${initialCount} de ${scene.hotspots.length} fallas`;
+                
                 if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
         });
@@ -490,7 +513,6 @@
                                 </tr>
                             </thead>
                             <tbody>`;
-            
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
@@ -498,7 +520,6 @@
                             <td class="p-2 font-medium">${scene.title}</td>
                             <td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td>
                             <td class="p-2">`;
-                
                 if (scene.isClean) {
                     if (ans.markedConforme) {
                         html += '<span class="text-emerald-600">✨ Correcto: Validó zona sin fallas</span>';
@@ -526,11 +547,13 @@
             await saveResultToFirebase();
             document.getElementById("report-content").innerHTML = generateReportHTML();
             document.getElementById("report-student-name").innerHTML = `👤 ${studentName}`;
+            document.getElementById("report-modal").style.display = "flex";
             document.getElementById("report-modal").classList.remove("hidden");
         });
 
         window.closeReportModal = () => {
             document.getElementById("report-modal").classList.add("hidden");
+            document.getElementById("report-modal").style.display = "none";
         };
 
         window.copyReportToClipboard = () => {
