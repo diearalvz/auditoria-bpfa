@@ -509,3 +509,76 @@
                 createPinAndTextarea(hit, "");
                 studentAnswers[currentSceneId].findings[hit.id] = "";
                 if (window.navigator?.vibrate) window.navigator.vibrate(50
+                                                                        }
+        });
+
+        btnConforme.onclick = function() {
+            if (!studentAnswers[currentSceneId]) studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
+            studentAnswers[currentSceneId].markedConforme = true;
+            btnConforme.disabled = true;
+            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
+            btnConforme.textContent = "🔒 Registrado como Conforme";
+            document.getElementById("empty-state")?.remove();
+            questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
+            showNavButtons();
+        };
+
+        btnNext.onclick = () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); };
+
+        function generateReportHTML() {
+            let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
+                            <strong>👤 Estudiante:</strong> ${studentName}<br>
+                            📅 <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
+                            🎯 <strong>Ayudas utilizadas:</strong> ${3 - availableHelps} de 3
+                        </div>
+                        <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                            <thead>
+                                <tr class="bg-slate-800 text-white text-left"><th class="p-3">Escenario</th><th class="p-3 text-center">Criterio</th><th class="p-3">Sustentación</th></tr>
+                            </thead>
+                            <tbody>`;
+            for (let id = 1; id <= 7; id++) {
+                const scene = dataset[id];
+                const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
+                html += `<tr class="border-b hover:bg-gray-50 bg-white text-slate-700">
+                            <td class="p-3 font-semibold">${scene.title}</td>
+                            <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">⚠️ Fallas</span>'}</td>
+                            <td class="p-3 text-slate-600">`;
+                if (scene.isClean) {
+                    html += ans.markedConforme ? '<span class="text-emerald-600">✨ Correcto</span>' : '<span class="text-rose-600">❌ Error: Reportó fallas inexistentes</span>';
+                } else if (ans.markedConforme) {
+                    html += '<span class="text-rose-600">❌ Error grave: Omitió anomalías críticas</span>';
+                } else {
+                    scene.hotspots.forEach(s => {
+                        html += `<div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-500 shadow-sm">
+                                    <strong class="text-slate-800 block text-xs">📍 ${s.label}</strong>
+                                    <span class="text-gray-600 text-xs italic">"${ans.findings[s.id] || 'No respondido'}"</span>
+                                </div>`;
+                    });
+                }
+                html += `</td></tr>`;
+            }
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        btnFinish.onclick = async function() {
+            await saveResultToFirebase();
+            document.getElementById("report-content").innerHTML = generateReportHTML();
+            document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
+            document.getElementById("report-modal").classList.remove("hidden");
+        };
+
+        document.getElementById("btn-close-report").onclick = () => document.getElementById("report-modal").classList.add("hidden");
+        
+        async function checkAdminButton() {
+            const results = await loadResultsFromFirebase();
+            if (results && results.length > 0) {
+                adminPanel.classList.remove("hidden");
+            }
+        }
+        
+        checkAdminButton();
+    </script>
+</body>
+</html>
