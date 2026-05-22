@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Simulador de Auditoría - BPFA</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -11,8 +11,6 @@
 
 <style>
 * { -webkit-tap-highlight-color: transparent; }
-.hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
-@keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } }
 html { scroll-behavior: smooth; }
 .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
 .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
@@ -20,6 +18,16 @@ html { scroll-behavior: smooth; }
 </head>
 
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
+
+<!-- Modal de registro -->
+<div id="registration-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6">
+    <h2 class="text-2xl font-bold text-amber-500 mb-4">📋 Auditoría BPFA</h2>
+    <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nombre completo del estudiante:</label>
+    <input type="text" id="student-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ej: Juan Pérez">
+    <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6">🚀 Comenzar Auditoría</button>
+  </div>
+</div>
 
 <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
   <div>
@@ -32,11 +40,11 @@ html { scroll-behavior: smooth; }
   </div>
 </header>
 
-<main id="main-content" class="flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+<main id="main-content" class="hidden flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
   <div class="lg:col-span-2">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
       <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
-        <span class="font-bold text-sm" id="scene-title">Estación de Inspección</span>
+        <span class="font-bold text-sm" id="scene-title">Escena</span>
         <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded">💡 Ayuda</button>
       </div>
       <div class="w-full overflow-x-auto overflow-y-hidden" id="scroll-wrapper">
@@ -45,19 +53,10 @@ html { scroll-behavior: smooth; }
           <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
         </div>
       </div>
-      <div class="p-2 bg-gray-50 text-xs text-center flex items-center justify-center gap-1">
-        <span>📱 Toca las anomalías. En móvil puedes deslizar la imagen hacia los lados.</span>
-      </div>
     </div>
   </div>
 
   <div class="flex flex-col gap-4">
-    <div class="bg-white p-4 rounded-xl shadow-lg">
-      <h3 class="font-bold border-b pb-2">📋 Criterio de Estación</h3>
-      <p class="text-xs mt-2">Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.</p>
-      <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3">✅ Marcar como Conforme</button>
-    </div>
-
     <div class="bg-white p-4 rounded-xl shadow-lg flex-1">
       <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0 hallazgos</span></h3>
       <div id="questions-container" class="mt-3 space-y-3 max-h-[280px] overflow-y-auto">
@@ -101,7 +100,8 @@ const dataset = {
     { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de polvillo medicado", q: "¿Qué consecuencias trae si el polvo medicado cae en sacos inferiores?" }
   ]},
   4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
-  5: {  5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
+  5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
+    { id: "e5_p1", x: 20,  5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
     { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "¿Por qué la humedad compromete la calidad de la planta?" },
     { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos si las lámparas no tienen cubierta?" },
     { id: "e5_p3", x: 40, y: 50, r: 13, label: "Paredes con manchas de humedad", q: "Las paredes presentan moho y deterioro. ¿Qué acción correctiva se debe realizar para cumplir la normativa?" }
@@ -126,15 +126,8 @@ const studentAnswers = {};
 // ==================== FUNCIONES ====================
 function updateHelpCounter() {
   helpCounter.textContent = availableHelps;
-  if (availableHelps === 0) {
-    btnHelp.disabled = true;
-    btnHelp.classList.add("opacity-50");
-    btnHelp.textContent = "💔 Sin Ayudas";
-  } else {
-    btnHelp.disabled = false;
-    btnHelp.classList.remove("opacity-50");
-    btnHelp.textContent = "💡 Ayuda";
-  }
+  btnHelp.disabled = availableHelps === 0;
+  btnHelp.textContent = availableHelps === 0 ? "💔 Sin Ayudas" : "💡 Ayuda";
 }
 
 function revealNextMissingHotspot() {
@@ -144,15 +137,8 @@ function revealNextMissingHotspot() {
   const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
   if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return; }
   const spot = missing[0];
-  const helpPin = document.createElement("div");
-  helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40";
-  helpPin.style.left = `${spot.x}%`;
-  helpPin.style.top = `${spot.y}%`;
-  helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm animate-pulse">?</span>`;
-  pinsOverlay.appendChild(helpPin);
   alert(`💡 Ayuda\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
-  setTimeout(() => helpPin.remove(), 4000);
-  availableHelps--; // ahora siempre descuenta, incluso en escenas correctas
+  availableHelps--; // siempre descuenta
   updateHelpCounter();
 }
 
@@ -196,9 +182,36 @@ btnFinish.onclick = async () => {
   mainContent.style.display = "none";
 };
 
+// ==================== REGISTRO ====================
+btnStart.onclick = function() {
+  studentName = studentNameInput.value.trim();
+  if (studentName === "") {
+    alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
+    return;
+  }
+  registrationModal.style.display = "none";
+  mainContent.style.display = "grid";
+  loadScene(1);
+  updateHelpCounter();
+};
+
 // Inicialización
-loadScene(1);
-updateHelpCounter();
+const sceneImage = document.getElementById("scene-image");
+const sceneTitle = document.getElementById("scene-title");
+const progressText = document.getElementById("progress-text");
+const pinsOverlay = document.getElementById("pins-overlay");
+const questionsContainer = document.getElementById("questions-container");
+const findingsCounter = document.getElementById("findings-counter");
+const btnPrev = document.getElementById("btn-prev");
+const btnNext = document.getElementById("btn-next");
+const btnFinish = document.getElementById("btn-finish");
+const btnHelp = document.getElementById("btn-help");
+const helpCounter = document.getElementById("help-counter");
+const registrationModal = document.getElementById("registration-modal");
+const studentNameInput = document.getElementById("student-name");
+const btnStart = document.getElementById("btn-start");
+const mainContent = document.getElementById("main-content");
+
 </script>
 </body>
 </html>
