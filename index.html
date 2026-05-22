@@ -84,7 +84,7 @@
     <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
         <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLANTA INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
         <div class="flex gap-3">
-            <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">3</span></div>
+            <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">2</span></div>
             <div class="bg-slate-700 px-3 py-1 rounded-lg"><span class="text-xs">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
         </div>
     </header>
@@ -131,12 +131,15 @@
                     <h2 class="font-bold text-amber-400 text-lg">📝 REPORTE FINAL DE AUDITORÍA</h2>
                     <p id="report-student-name" class="text-xs text-gray-300"></p>
                 </div>
-                <button id="btn-close-report" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
+                <button onclick="resetAppToRegistration()" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
             </div>
             <div class="p-5" id="report-content"></div>
-            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+            <div class="p-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end gap-2">
                 <button onclick="window.print()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
                     🖨️ Guardar Reporte en PDF
+                </button>
+                <button onclick="resetAppToRegistration()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
+                    🔄 Terminar y Salir
                 </button>
             </div>
         </div>
@@ -164,7 +167,7 @@
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET VERIFICADO ====================
+        // ==================== DATASET VERIFICADO CON TUS CAMBIOS MANUALES ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -174,17 +177,17 @@
             ] },
             3: { title: "Escena 3: Estanterías de Almacenamiento Especial", isClean: false, image: "assets/escena3.png", hotspots: [
                 { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
-                { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de medicamento", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
+                { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de producto", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
             ] },
             4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
                 { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
-                { id: "e5_p3", x: 50, y: 66, r: 13, label: "Paredes con manchas de humedad", q: "¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
+                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" },
+                { id: "e5_p3", x: 50, y: 66, r: 13, label: "Paredes con manchas de humedad", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
             ] },
             6: { title: "Escena 6: Área de Residuos / Zona de Desechos", isClean: false, image: "assets/escena6.png", hotspots: [
                 { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
-                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
             ] },
             7: { title: "Escena 7: Área de Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
                 { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
@@ -193,7 +196,8 @@
             ] }
         };
 
-        let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
+        // MEJORA 2: Se reduce el límite inicial de ayudas disponibles a 2
+        let currentSceneId = 1, availableHelps = 2, studentName = "", isAdminAuthenticated = false;
         let studentAnswers = {};
 
         // Captura de Elementos DOM
@@ -237,8 +241,8 @@
                     studentName: studentName,
                     timestamp: new Date().toISOString(),
                     fechaLegible: new Date().toLocaleString(),
-                    helpsUsed: 3 - availableHelps,
-                    totalHelps: 3,
+                    helpsUsed: 2 - availableHelps,
+                    totalHelps: 2,
                     answers: studentAnswers
                 });
                 showToast("✅ ¡Resultado guardado en la nube!");
@@ -276,7 +280,7 @@
                 return;
             }
             let html = `<div class="mb-4 p-3 bg-blue-50 rounded text-slate-700">📊 Total: ${results.length} auditorías registradas</div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead><tr class="bg-slate-100 text-slate-700"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r) => { html += `<tr class="border-b text-slate-600"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
+            results.forEach((r) => { html += `<tr class="border-b text-slate-600"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/2</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
             html += `</tbody></table></div>`;
             document.getElementById("admin-content").innerHTML = html;
         }
@@ -285,13 +289,16 @@
             try {
                 const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
                 const r = doc.data();
-                let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4 text-slate-800"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas usadas: ${r.helpsUsed}/3</p></div>`;
+                let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4 text-slate-800"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas usadas: ${r.helpsUsed}/2</p></div>`;
                 for (let i = 1; i <= 7; i++) {
                     const scene = dataset[i];
                     const ans = r.answers[i] || { markedConforme: false, findings: {} };
                     html += `<div class="border p-2 mb-2 rounded text-slate-700"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
                     if (!scene.isClean && !ans.markedConforme) {
                         scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
+                        if (i === 6 && ans.areaResiduosCorrecta) {
+                            html += `<div class="text-xs ml-2 mt-1 bg-slate-100 p-1 rounded font-medium">❓ ¿Área de residuos correcta?: <span class="text-blue-700 uppercase font-bold">${ans.areaResiduosCorrecta}</span><br>🗣️ Justificación: ${ans.areaResiduosJustificacion || 'Sin justificar'}</div>`;
+                        }
                     } else if (!scene.isClean && ans.markedConforme) {
                         html += `<span class="text-rose-600 text-xs">❌ Error: El alumno omitió fallas de bioseguridad</span>`;
                     } else if (scene.isClean && !ans.markedConforme) {
@@ -395,11 +402,9 @@
             }
         }
 
-        // CORRECCIÓN 1: El descuento de ayuda ahora es universal (Se descuenta siempre)
         btnHelp.onclick = function() {
             if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
             
-            // Se descuenta inmediatamente por el uso
             availableHelps--;
             updateHelpCounter();
 
@@ -421,7 +426,6 @@
                 return; 
             }
             
-            // Lógica visual del Pin de sugerencia si el escenario tiene fallas faltantes
             const spot = missing[0];
             const helpPin = document.createElement("div");
             helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40 animate-pulse";
@@ -448,7 +452,7 @@
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
             document.getElementById("scroll-wrapper").scrollLeft = 0;
-            if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
+            if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {}, areaResiduosCorrecta: "", areaResiduosJustificacion: "" };
             
             const existing = studentAnswers[id].findings;
             if (studentAnswers[id].markedConforme) {
@@ -471,9 +475,79 @@
                         createPinAndTextarea(spot, existing[spot.id]);
                     }
                 });
+                
+                // Si es escena 6, renderizar de nuevo la pregunta extra guardada
+                if(id === 6) {
+                    renderEscena6ExtraQuestion();
+                }
+
                 findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
-                if (Object.keys(existing).length === scene.hotspots.length) showNavButtons();
+                checkSceneCompletion();
             }
+        }
+
+        // Bloque de verificación de finalización de escena
+        function checkSceneCompletion() {
+            const scene = dataset[currentSceneId];
+            const ans = studentAnswers[currentSceneId];
+            const count = Object.keys(ans.findings).length;
+            
+            if (count === scene.hotspots.length) {
+                if (currentSceneId === 6) {
+                    // En la escena 6 requiere que además responda el Sí/No y escriba la justificación
+                    if (ans.areaResiduosCorrecta !== "" && ans.areaResiduosJustificacion.trim() !== "") {
+                        showNavButtons();
+                    } else {
+                        btnNext.classList.add("hidden");
+                        btnFinish.classList.add("hidden");
+                    }
+                } else {
+                    showNavButtons();
+                }
+            }
+        }
+
+        // MEJORA 1: Crear e insertar dinámicamente la pregunta especial de la Escena 6
+        function renderEscena6ExtraQuestion() {
+            if (document.getElementById("escena6-special-box")) return;
+
+            const specialBox = document.createElement("div");
+            specialBox.id = "escena6-special-box";
+            specialBox.className = "bg-amber-50 p-3 rounded-xl border border-amber-300 space-y-2 mt-3 shadow-sm text-slate-800";
+            
+            const savedChoice = studentAnswers[6].areaResiduosCorrecta || "";
+            const savedText = studentAnswers[6].areaResiduosJustificacion || "";
+
+            specialBox.innerHTML = `
+                <p class="text-xs font-bold text-slate-800">❓ ¿Es correcto que esta zona sea el área de almacenamiento de residuos?</p>
+                <div class="flex gap-4 my-1">
+                    <label class="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                        <input type="radio" name="residuos-choice" value="si" ${savedChoice === "si" ? "checked" : ""} class="accent-amber-500"> Sí
+                    </label>
+                    <label class="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                        <input type="radio" name="residuos-choice" value="no" ${savedChoice === "no" ? "checked" : ""} class="accent-amber-500"> No
+                    </label>
+                </div>
+                <label class="text-xs font-bold text-slate-700 block mt-1">📝 ¿Por qué?</label>
+                <textarea id="input_escena6_justificacion" rows="2" class="w-full p-2 border rounded text-xs bg-white focus:ring-1 focus:ring-amber-500" placeholder="Escribe aquí tu justificación técnica...">${savedText}</textarea>
+            `;
+
+            questionsContainer.appendChild(specialBox);
+
+            // Escuchas de eventos para actualizar el objeto de datos
+            const radios = specialBox.querySelectorAll('input[name="residuos-choice"]');
+            radios.forEach(radio => {
+                radio.addEventListener("change", function() {
+                    studentAnswers[6].areaResiduosCorrecta = this.value;
+                    checkSceneCompletion();
+                });
+            });
+
+            const textareaExtra = document.getElementById("input_escena6_justificacion");
+            textareaExtra.addEventListener("input", function() {
+                studentAnswers[6].areaResiduosJustificacion = this.value;
+                checkSceneCompletion();
+            });
         }
 
         function createPinAndTextarea(spot, existingValue = "") {
@@ -495,13 +569,17 @@
                 studentAnswers[currentSceneId].findings[spot.id] = this.value; 
                 const count = Object.keys(studentAnswers[currentSceneId].findings).length;
                 findingsCounter.textContent = `${count} de ${dataset[currentSceneId].hotspots.length} fallas`;
-                if (count === dataset[currentSceneId].hotspots.length) showNavButtons();
+                
+                if (currentSceneId === 6) {
+                    renderEscena6ExtraQuestion();
+                }
+                checkSceneCompletion();
             });
         }
 
         imgViewport.addEventListener("click", function(e) {
             if (!studentAnswers[currentSceneId]) {
-                studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
+                studentAnswers[currentSceneId] = { markedConforme: false, findings: {}, areaResiduosCorrecta: "", areaResiduosJustificacion: "" };
             }
             if (studentAnswers[currentSceneId].markedConforme) return;
             
@@ -521,12 +599,17 @@
                 document.getElementById("empty-state")?.remove();
                 createPinAndTextarea(hit, "");
                 studentAnswers[currentSceneId].findings[hit.id] = "";
+                
+                if (currentSceneId === 6) {
+                    renderEscena6ExtraQuestion();
+                }
+
                 if (window.navigator?.vibrate) window.navigator.vibrate(55);
             }
         });
 
         btnConforme.onclick = function() {
-            if (!studentAnswers[currentSceneId]) studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
+            if (!studentAnswers[currentSceneId]) studentAnswers[currentSceneId] = { markedConforme: false, findings: {}, areaResiduosCorrecta: "", areaResiduosJustificacion: "" };
             studentAnswers[currentSceneId].markedConforme = true;
             btnConforme.disabled = true;
             btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
@@ -542,7 +625,7 @@
             let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
                             <strong>👤 Estudiante:</strong> ${studentName}<br>
                             📅 <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
-                            🎯 <strong>Ayudas utilizadas:</strong> ${3 - availableHelps} de 3
+                            🎯 <strong>Ayudas utilizadas:</strong> ${2 - availableHelps} de 2
                         </div>
                         <div class="overflow-x-auto">
                         <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
@@ -552,7 +635,7 @@
                             <tbody>`;
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
-                const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
+                const ans = studentAnswers[id] || { markedConforme: false, findings: {}, areaResiduosCorrecta: "", areaResiduosJustificacion: "" };
                 html += `<tr class="border-b hover:bg-gray-50 bg-white text-slate-700">
                             <td class="p-3 font-semibold">${scene.title}</td>
                             <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">⚠️ Fallas</span>'}</td>
@@ -568,6 +651,16 @@
                                     <span class="text-gray-600 text-xs italic">"${ans.findings[s.id] || 'No respondido'}"</span>
                                 </div>`;
                     });
+                    
+                    // Renderizar los datos de la pregunta extra en el reporte final del alumno
+                    if (id === 6 && ans.areaResiduosCorrecta) {
+                        html += `<div class="bg-amber-50/60 p-2 rounded border border-amber-200 mt-2">
+                                    <strong class="text-slate-800 block text-xs">❓ ¿Es correcto que esta zona sea el área de almacenamiento de residuos?</strong>
+                                    <span class="text-xs uppercase font-bold text-blue-700">${ans.areaResiduosCorrecta}</span>
+                                    <strong class="text-slate-800 block text-xs mt-1">🗣️ Justificación:</strong>
+                                    <span class="text-gray-600 text-xs italic">"${ans.areaResiduosJustificacion || 'Sin responder'}"</span>
+                                 </div>`;
+                    }
                 }
                 html += `</td></tr>`;
             }
@@ -580,31 +673,27 @@
             document.getElementById("report-content").innerHTML = generateReportHTML();
             document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
             document.getElementById("report-modal").classList.remove("hidden");
+            document.getElementById("report-modal").style.display = "flex";
         };
 
-        // CORRECCIÓN 2: Función para reiniciar completamente el sistema y volver a la pantalla de nombre automáticamente
-        function resetAppToRegistration() {
-            // Ocultar modal de reporte y contenido principal
-            document.getElementById("report-modal").classList.add("hidden");
+        window.resetAppToRegistration = function() {
+            const reportModal = document.getElementById("report-modal");
+            reportModal.classList.add("hidden");
+            reportModal.style.display = "none";
+            
             mainContent.classList.remove("grid");
             mainContent.classList.add("hidden");
             
-            // Vaciar y reiniciar variables del estado
             studentName = "";
             studentNameInput.value = "";
-            availableHelps = 3;
+            availableHelps = 2; // Reinicia correctamente al nuevo límite de 2 ayudas
             currentSceneId = 1;
             
-            // Limpiar el mapa de respuestas del objeto global
-            for (let member in studentAnswers) delete studentAnswers[member];
+            studentAnswers = {};
             
-            // Mostrar de nuevo el login inicial
+            updateHelpCounter();
             registrationModal.classList.remove("hidden");
-        }
-
-        // Ejecutar el reinicio total al cerrar el modal de reporte
-        document.getElementById("btn-close-report").onclick = function() {
-            resetAppToRegistration();
+            showToast("🔄 Aplicación reiniciada para un nuevo intento");
         };
         
         async function checkAdminButton() {
