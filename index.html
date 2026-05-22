@@ -10,21 +10,18 @@
     <style>
         * { -webkit-tap-highlight-color: transparent; }
         .hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } }
-        
-        /* Ajustes específicos para móviles */
+        @keyframes pulse { 
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 
+            100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 
+        }
         @media (max-width: 768px) { 
             .hotspot-marker { width: 44px !important; height: 44px !important; } 
             .hotspot-marker span { width: 32px !important; height: 32px !important; font-size: 16px !important; } 
             textarea { font-size: 14px !important; } 
             button { min-height: 48px; } 
-            /* Forzamos a que la imagen tenga un ancho mínimo en móviles para que no se miniaturice */
-            #image-viewport {
-                min-width: 650px; /* Tamaño ideal para explorar con scroll sin deformar */
-                position: relative;
-            }
+            #image-viewport { min-width: 650px; position: relative; }
         }
-        
         html { scroll-behavior: smooth; }
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
         .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
@@ -93,7 +90,7 @@
         </div>
     </header>
 
-    <main id="main-content" class="flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <main id="main-content" class="max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2">
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
@@ -157,7 +154,14 @@
             messagingSenderId: "357351478133",
             appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        // Inicialización segura de Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (e) {
+            console.error("Error al inicializar Firebase: ", e);
+        }
+        
         const db = firebase.firestore();
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
@@ -240,7 +244,8 @@
                 showToast("✅ ¡Resultado guardado en la nube!");
                 return true;
             } catch (error) {
-                showToast("❌ Error al guardar", true);
+                console.error(error);
+                showToast("❌ Error al guardar en la nube", true);
                 return false;
             }
         }
@@ -252,7 +257,7 @@
                 snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
                 return results;
             } catch (error) {
-                showToast("❌ Error al cargar", true);
+                console.error(error);
                 return [];
             }
         }
@@ -266,7 +271,7 @@
             adminModal.classList.remove("hidden");
             const results = await loadResultsFromFirebase();
             if (results.length === 0) { 
-                document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados</div>'; 
+                document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados registrados.</div>';
                 return;
             }
             let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
@@ -276,25 +281,27 @@
         };
 
         window.viewResultDetail = async function(id) {
-            const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
-            const r = doc.data();
-            let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
-            for (let i = 1; i <= 7; i++) {
-                const scene = dataset[i];
-                const ans = r.answers[i] || { markedConforme: false, findings: {} };
-                html += `<div class="border p-2 mb-2 rounded"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
-                if (!scene.isClean && !ans.markedConforme) {
-                    scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
-                } else if (!scene.isClean && ans.markedConforme) {
-                    html += `<span class="text-rose-600 text-xs">❌ Error: No detectó fallas críticas</span>`;
-                } else if (scene.isClean && !ans.markedConforme) {
-                    html += `<span class="text-rose-600 text-xs">❌ Error: Reportó fallas donde no existen</span>`;
-                } else {
-                    html += `<span class="text-emerald-600 text-xs">✨ Correcto</span>`;
+            try {
+                const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
+                const r = doc.data();
+                let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
+                for (let i = 1; i <= 7; i++) {
+                    const scene = dataset[i];
+                    const ans = r.answers[i] || { markedConforme: false, findings: {} };
+                    html += `<div class="border p-2 mb-2 rounded"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
+                    if (!scene.isClean && !ans.markedConforme) {
+                        scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
+                    } else if (!scene.isClean && ans.markedConforme) {
+                        html += `<span class="text-rose-600 text-xs">❌ Error: No detectó fallas críticas</span>`;
+                    } else if (scene.isClean && !ans.markedConforme) {
+                        html += `<span class="text-rose-600 text-xs">❌ Error: Reportó fallas donde no existen</span>`;
+                    } else {
+                        html += `<span class="text-emerald-600 text-xs">✨ Correcto</span>`;
+                    }
+                    html += `</div>`;
                 }
-                html += `</div>`;
-            }
-            document.getElementById("admin-content").innerHTML = html;
+                document.getElementById("admin-content").innerHTML = html;
+            } catch(e) { showToast("Error al cargar detalles", true); }
         };
 
         window.deleteResult = async function(id) {
@@ -349,7 +356,6 @@
                 adminPassword.value = "";
             }
         });
-
         btnCancelPassword.addEventListener("click", () => passwordModal.classList.add("hidden"));
         adminPassword.addEventListener("keypress", (e) => { if (e.key === "Enter") btnVerifyPassword.click(); });
 
@@ -376,11 +382,11 @@
         function updateHelpCounter() {
             helpCounter.textContent = availableHelps;
             if (availableHelps === 0) { 
-                btnHelp.disabled = true; 
+                btnHelp.disabled = true;
                 btnHelp.classList.add("opacity-50"); 
                 btnHelp.textContent = "💔 Sin Ayudas"; 
             } else { 
-                btnHelp.disabled = false; 
+                btnHelp.disabled = false;
                 btnHelp.classList.remove("opacity-50"); 
                 btnHelp.textContent = "💡 Ayuda";
             }
@@ -424,15 +430,12 @@
             questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>`;
             findingsCounter.textContent = "0 hallazgos";
             btnConforme.disabled = false;
-            btnConforme.classList.remove("opacity-40", "bg-slate-400");
-            btnConforme.classList.add("bg-emerald-600", "hover:bg-emerald-700");
+            btnConforme.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3";
             btnConforme.textContent = "✅ Marcar como Conforme";
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
             
-            // Forzar reseteo del scroll lateral al inicio de la escena
             document.getElementById("scroll-wrapper").scrollLeft = 0;
-            
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
             
             const existing = studentAnswers[id].findings;
@@ -440,7 +443,7 @@
 
             if (isSceneApproved) {
                 btnConforme.disabled = true;
-                btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+                btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
                 btnConforme.textContent = "🔒 Registrado como Conforme";
                 const empty = document.getElementById("empty-state");
                 if (empty) empty.remove();
@@ -481,6 +484,11 @@
         }
 
         imgViewport.addEventListener("click", function(e) {
+            // Asegurar inicialización de la escena actual
+            if (!studentAnswers[currentSceneId]) {
+                studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
+            }
+
             const scene = dataset[currentSceneId];
             if (studentAnswers[currentSceneId].markedConforme) return;
             const rect = imgViewport.getBoundingClientRect();
@@ -526,12 +534,14 @@
         });
 
         btnConforme.addEventListener("click", () => {
+            if (!studentAnswers[currentSceneId]) studentAnswers[currentSceneId] = { markedConforme: false, findings: {} };
             studentAnswers[currentSceneId].markedConforme = true;
             btnConforme.disabled = true;
-            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed mt-3";
             btnConforme.textContent = "🔒 Registrado como Conforme";
             const empty = document.getElementById("empty-state");
             if (empty) empty.remove();
+            
             questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
             showNavButtons();
         });
@@ -561,7 +571,8 @@
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
                 html += `<tr class="border-b hover:bg-gray-50 bg-white">
                             <td class="p-3 font-semibold text-slate-700">${scene.title}</td>
-                            <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⚠️ Con fallas</span>'}</td>
+                            <td class="p-3 text-center">${ans.markedConforme ?
+                            '<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⚠️ Con fallas</span>'}</td>
                             <td class="p-3 text-slate-600">`;
                 if (scene.isClean) {
                     if (ans.markedConforme) {
@@ -600,12 +611,17 @@
         };
 
         async function checkAdminButton() {
-            const results = await loadResultsFromFirebase();
-            if (results.length > 0) {
-                adminPanel.classList.remove("hidden");
+            try {
+                const results = await loadResultsFromFirebase();
+                if (results && results.length > 0) {
+                    adminPanel.classList.remove("hidden");
+                }
+            } catch(e) {
+                console.log("Modo offline o error de conexión con Firebase simulado de forma segura.");
             }
         }
         
+        // Ejecución segura
         checkAdminButton();
     </script>
 </body>
