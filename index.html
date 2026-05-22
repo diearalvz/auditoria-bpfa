@@ -11,7 +11,20 @@
         * { -webkit-tap-highlight-color: transparent; }
         .hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } }
-        @media (max-width: 768px) { .hotspot-marker { width: 40px !important; height: 40px !important; } .hotspot-marker span { width: 28px !important; height: 28px !important; font-size: 14px !important; } textarea { font-size: 14px !important; } button { min-height: 48px; } }
+        
+        /* Ajustes específicos para móviles */
+        @media (max-width: 768px) { 
+            .hotspot-marker { width: 44px !important; height: 44px !important; } 
+            .hotspot-marker span { width: 32px !important; height: 32px !important; font-size: 16px !important; } 
+            textarea { font-size: 14px !important; } 
+            button { min-height: 48px; } 
+            /* Forzamos a que la imagen tenga un ancho mínimo en móviles para que no se miniaturice */
+            #image-viewport {
+                min-width: 650px; /* Tamaño ideal para explorar con scroll sin deformar */
+                position: relative;
+            }
+        }
+        
         html { scroll-behavior: smooth; }
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
         .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
@@ -40,7 +53,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
              <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
                 <h2 class="text-2xl font-bold text-amber-400">🔒 Acceso Restringido</h2>
-                <p class="text-sm text-gray-300">Panel de Administrador</p>
+                <p class="text-sm text-gray-300">Panel de Administrator</p>
             </div>
             <div class="p-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">🔐 Contraseña de administrador:</label>
@@ -87,11 +100,15 @@
                     <span class="font-bold text-sm" id="scene-title">Estación de Inspección</span>
                     <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded">💡 Ayuda</button>
                 </div>
-                <div class="relative w-full cursor-crosshair" id="image-container">
-                    <img id="scene-image" src="" class="w-full h-auto block">
-                    <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
+                <div class="w-full overflow-x-auto overflow-y-hidden" id="scroll-wrapper">
+                    <div class="relative w-full cursor-crosshair" id="image-viewport">
+                        <img id="scene-image" src="" class="w-full h-auto block select-none">
+                        <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
+                    </div>
                 </div>
-                <div class="p-2 bg-gray-50 text-xs text-center">📱 Toca o haz clic en las áreas donde identifiques anomalías</div>
+                <div class="p-2 bg-gray-50 text-xs text-center flex items-center justify-center gap-1">
+                    <span>📱 Toca las anomalías. En móvil puedes deslizar la imagen hacia los lados.</span>
+                </div>
             </div>
         </div>
         <div class="flex flex-col gap-4">
@@ -153,7 +170,7 @@
             ] },
             6: { title: "Escena 6: Zona de Control de Desperdicios", isClean: false, image: "assets/escena6.png", hotspots: [
                 { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
-                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "💡 ¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
             ] },
             7: { title: "Escena 7: Área de Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
                 { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
@@ -177,7 +194,7 @@
         const btnFinish = document.getElementById("btn-finish");
         const btnHelp = document.getElementById("btn-help");
         const helpCounter = document.getElementById("help-counter");
-        const imgContainer = document.getElementById("image-container");
+        const imgViewport = document.getElementById("image-viewport");
         const mainContent = document.getElementById("main-content");
         const registrationModal = document.getElementById("registration-modal");
         const studentNameInput = document.getElementById("student-name");
@@ -402,6 +419,9 @@
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
             
+            // Forzar reseteo del scroll al inicio de la escena para que empiece desde la izquierda
+            document.getElementById("scroll-wrapper").scrollLeft = 0;
+            
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
             
             const existing = studentAnswers[id].findings;
@@ -449,10 +469,10 @@
             }
         }
 
-        imgContainer.addEventListener("click", function(e) {
+        imgViewport.addEventListener("click", function(e) {
             const scene = dataset[currentSceneId];
             if (studentAnswers[currentSceneId].markedConforme) return;
-            const rect = imgContainer.getBoundingClientRect();
+            const rect = imgViewport.getBoundingClientRect();
             const clickX = ((e.clientX - rect.left) / rect.width) * 100;
             const clickY = ((e.clientY - rect.top) / rect.height) * 100;
             
