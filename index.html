@@ -125,8 +125,7 @@
     </div>
 
     <script>
-        // ==================== FIREBASE ====================
-        // ⚠️ REEMPLAZA CON TUS DATOS DE FIREBASE ⚠️
+        // ==================== FIREBASE - REEMPLAZA CON TUS DATOS ====================
         const firebaseConfig = {
             apiKey: "TU_API_KEY",
             authDomain: "TU_AUTH_DOMAIN",
@@ -140,7 +139,7 @@
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET COMPLETO CON TUS TEXTOS ORIGINALES ====================
+        // ==================== DATASET COMPLETO ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -172,16 +171,38 @@
         const studentAnswers = {};
 
         // DOM Elements
-        const sceneImage = document.getElementById("scene-image"), sceneTitle = document.getElementById("scene-title"), progressText = document.getElementById("progress-text");
-        const pinsOverlay = document.getElementById("pins-overlay"), questionsContainer = document.getElementById("questions-container"), findingsCounter = document.getElementById("findings-counter");
-        const btnConforme = document.getElementById("btn-conforme"), btnNext = document.getElementById("btn-next"), btnFinish = document.getElementById("btn-finish"), btnHelp = document.getElementById("btn-help");
-        const helpCounter = document.getElementById("help-counter"), imgContainer = document.getElementById("image-container"), mainContent = document.getElementById("main-content");
-        const registrationModal = document.getElementById("registration-modal"), studentNameInput = document.getElementById("student-name"), btnStart = document.getElementById("btn-start");
-        const adminPanel = document.getElementById("admin-panel"), btnAdmin = document.getElementById("btn-admin"), adminModal = document.getElementById("admin-modal");
-        const passwordModal = document.getElementById("password-modal"), adminPassword = document.getElementById("admin-password");
-        const btnVerifyPassword = document.getElementById("btn-verify-password"), btnCancelPassword = document.getElementById("btn-cancel-password");
+        const sceneImage = document.getElementById("scene-image");
+        const sceneTitle = document.getElementById("scene-title");
+        const progressText = document.getElementById("progress-text");
+        const pinsOverlay = document.getElementById("pins-overlay");
+        const questionsContainer = document.getElementById("questions-container");
+        const findingsCounter = document.getElementById("findings-counter");
+        const btnConforme = document.getElementById("btn-conforme");
+        const btnNext = document.getElementById("btn-next");
+        const btnFinish = document.getElementById("btn-finish");
+        const btnHelp = document.getElementById("btn-help");
+        const helpCounter = document.getElementById("help-counter");
+        const imgContainer = document.getElementById("image-container");
+        const mainContent = document.getElementById("main-content");
+        const registrationModal = document.getElementById("registration-modal");
+        const studentNameInput = document.getElementById("student-name");
+        const btnStart = document.getElementById("btn-start");
+        const adminPanel = document.getElementById("admin-panel");
+        const btnAdmin = document.getElementById("btn-admin");
+        const adminModal = document.getElementById("admin-modal");
+        const passwordModal = document.getElementById("password-modal");
+        const adminPassword = document.getElementById("admin-password");
+        const btnVerifyPassword = document.getElementById("btn-verify-password");
+        const btnCancelPassword = document.getElementById("btn-cancel-password");
 
-        function showToast(msg, isError = false) { const t = document.createElement("div"); t.className = "toast-notification"; t.style.background = isError ? "#dc2626" : "#1e293b"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+        function showToast(msg, isError = false) { 
+            const t = document.createElement("div"); 
+            t.className = "toast-notification"; 
+            t.style.background = isError ? "#dc2626" : "#1e293b"; 
+            t.textContent = msg; 
+            document.body.appendChild(t); 
+            setTimeout(() => t.remove(), 3000); 
+        }
 
         async function saveResultToFirebase() {
             try {
@@ -220,7 +241,7 @@
             const results = await loadResultsFromFirebase();
             if (results.length === 0) { document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados</div>'; return; }
             let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r, i) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</div><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Eliminar</button></div><tr>`; });
+            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</div><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Eliminar</button></div></tr>`; });
             html += `</tbody>}</div>`;
             document.getElementById("admin-content").innerHTML = html;
         };
@@ -300,21 +321,42 @@
         btnCancelPassword.addEventListener("click", () => passwordModal.classList.add("hidden"));
         adminPassword.addEventListener("keypress", (e) => { if (e.key === "Enter") btnVerifyPassword.click(); });
 
-        function showNavButtons() { if (currentSceneId < 7) btnNext.classList.remove("hidden"); else btnFinish.classList.remove("hidden"); }
+        function showNavButtons() { 
+            if (currentSceneId < 7) btnNext.classList.remove("hidden"); 
+            else btnFinish.classList.remove("hidden"); 
+        }
 
-        btnStart.addEventListener("click", () => {
+        // CORREGIDO: Evento del botón Comenzar
+        btnStart.addEventListener("click", function() {
             studentName = studentNameInput.value.trim();
-            if (!studentName) { alert("⚠️ Ingresa tu nombre completo"); return; }
+            if (studentName === "") {
+                alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
+                studentNameInput.focus();
+                return;
+            }
             registrationModal.style.display = "none";
             mainContent.style.display = "grid";
             updateHelpCounter();
             loadScene(1);
         });
 
+        studentNameInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                btnStart.click();
+            }
+        });
+
         function updateHelpCounter() {
             helpCounter.textContent = availableHelps;
-            if (availableHelps === 0) { btnHelp.disabled = true; btnHelp.classList.add("opacity-50"); btnHelp.textContent = "💔 Sin Ayudas"; }
-            else { btnHelp.disabled = false; btnHelp.classList.remove("opacity-50"); btnHelp.textContent = "💡 Ayuda"; }
+            if (availableHelps === 0) { 
+                btnHelp.disabled = true; 
+                btnHelp.classList.add("opacity-50"); 
+                btnHelp.textContent = "💔 Sin Ayudas"; 
+            } else { 
+                btnHelp.disabled = false; 
+                btnHelp.classList.remove("opacity-50"); 
+                btnHelp.textContent = "💡 Ayuda"; 
+            }
         }
 
         function revealNextMissingHotspot() {
@@ -327,7 +369,8 @@
             const spot = missing[0];
             const helpPin = document.createElement("div");
             helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40";
-            helpPin.style.left = `${spot.x}%`; helpPin.style.top = `${spot.y}%`;
+            helpPin.style.left = `${spot.x}%`; 
+            helpPin.style.top = `${spot.y}%`;
             helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm animate-pulse">?</span>`;
             pinsOverlay.appendChild(helpPin);
             alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
@@ -337,8 +380,8 @@
         }
 
         btnHelp.addEventListener("click", () => {
-            if (availableHelps === 0) { alert("❌ No quedan ayudas"); return; }
-            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme"); return; }
+            if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
+            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
             revealNextMissingHotspot();
         });
 
@@ -408,9 +451,10 @@
                 const box = document.createElement("div");
                 box.className = "bg-slate-50 p-2 rounded border border-red-200";
                 box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
-                questionsContainer.appendChild(box
-                                                               document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
-                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
+                questionsContainer.appendChild(box);
+                document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
+                    studentAnswers
+                                        studentAnswers[currentSceneId].findings[hit.id] = this.value;
                     const count = Object.keys(studentAnswers[currentSceneId].findings).length;
                     findingsCounter.textContent = `${count} de ${scene.hotspots.length} fallas`;
                     if (count === scene.hotspots.length) showNavButtons();
@@ -433,13 +477,26 @@
             showNavButtons();
         });
 
-        btnNext.addEventListener("click", () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); });
+        btnNext.addEventListener("click", () => { 
+            if (currentSceneId < 7) loadScene(currentSceneId + 1); 
+        });
 
         function generateReportHTML() {
-            let html = `<div class="p-3 bg-amber-50 rounded mb-4"><strong>👤 ${studentName}</strong><br>📅 ${new Date().toLocaleString()}<br>🎯 Ayudas utilizadas: ${3 - availableHelps} de 3</div>
+            let html = `<div class="p-3 bg-amber-50 rounded mb-4">
+                            <strong>👤 ${studentName}</strong><br>
+                            📅 ${new Date().toLocaleString()}<br>
+                            🎯 Ayudas utilizadas: ${3 - availableHelps} de 3
+                        </div>
                         <table class="w-full text-sm border-collapse">
-                        <thead><tr class="bg-slate-100"><th class="p-2">Escenario</th><th class="p-2">Criterio</th><th class="p-2">Argumentación</th></tr></thead>
-                        <tbody>`;
+                            <thead>
+                                <tr class="bg-slate-100">
+                                    <th class="p-2">Escenario</th>
+                                    <th class="p-2">Criterio</th>
+                                    <th class="p-2">Argumentación</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
@@ -447,13 +504,22 @@
                             <td class="p-2">${scene.title}</td>
                             <td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td>
                             <td class="p-2">`;
+                
                 if (scene.isClean) {
-                    html += ans.markedConforme ? '✨ Correcto: Validó zona sin fallas' : '❌ Error: Reportó fallas donde no existen';
+                    if (ans.markedConforme) {
+                        html += '✨ Correcto: Validó zona sin fallas';
+                    } else {
+                        html += '❌ Error: Reportó fallas donde no existen';
+                    }
                 } else if (ans.markedConforme) {
                     html += '❌ Error grave: No detectó fallas críticas';
                 } else {
                     scene.hotspots.forEach(s => {
-                        html += `<div class="bg-gray-50 p-2 mb-2 rounded"><strong>📍 ${s.label}</strong><br>${ans.findings[s.id] || '⚠️ No respondido'}</div>`;
+                        const respuesta = ans.findings[s.id] || '⚠️ No respondido';
+                        html += `<div class="bg-gray-50 p-2 mb-2 rounded">
+                                    <strong>📍 ${s.label}</strong><br>
+                                    ${respuesta}
+                                </div>`;
                     });
                 }
                 html += `</td></tr>`;
@@ -469,16 +535,23 @@
             document.getElementById("report-modal").classList.remove("hidden");
         });
 
-        window.closeReportModal = () => document.getElementById("report-modal").classList.add("hidden");
+        window.closeReportModal = () => {
+            document.getElementById("report-modal").classList.add("hidden");
+        };
+
         window.copyReportToClipboard = () => {
-            navigator.clipboard.writeText(document.getElementById("report-content").innerText);
+            const reportText = document.getElementById("report-content").innerText;
+            navigator.clipboard.writeText(reportText);
             alert("✅ Reporte copiado al portapapeles");
         };
 
         async function checkAdminButton() {
             const results = await loadResultsFromFirebase();
-            if (results.length > 0) adminPanel.classList.remove("hidden");
+            if (results.length > 0) {
+                adminPanel.classList.remove("hidden");
+            }
         }
+        
         checkAdminButton();
     </script>
 </body>
