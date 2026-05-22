@@ -194,7 +194,7 @@
         };
 
         let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
-        const studentAnswers = {};
+        let studentAnswers = {};
 
         // Captura de Elementos DOM
         const sceneImage = document.getElementById("scene-image");
@@ -395,17 +395,33 @@
             }
         }
 
+        // CORRECCIÓN 1: El descuento de ayuda ahora es universal (Se descuenta siempre)
         btnHelp.onclick = function() {
             if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
-            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
+            
+            // Se descuenta inmediatamente por el uso
+            availableHelps--;
+            updateHelpCounter();
+
+            if (studentAnswers[currentSceneId]?.markedConforme) { 
+                alert("⚠️ Ya marcaste esta escena como conforme. (Ayuda consumida)"); 
+                return; 
+            }
             
             const scene = dataset[currentSceneId];
-            if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return; }
+            if (scene.isClean) { 
+                alert("✅ Esta escena está limpia y libre de fallas. (Ayuda consumida)"); 
+                return; 
+            }
             
             const currentFindings = studentAnswers[currentSceneId]?.findings || {};
             const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
-            if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return; }
+            if (missing.length === 0) { 
+                alert("🎉 Ya encontraste todas las fallas en este escenario. (Ayuda consumida)"); 
+                return; 
+            }
             
+            // Lógica visual del Pin de sugerencia si el escenario tiene fallas faltantes
             const spot = missing[0];
             const helpPin = document.createElement("div");
             helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40 animate-pulse";
@@ -415,8 +431,6 @@
             pinsOverlay.appendChild(helpPin);
             alert(`💡 Comodín Utilizado\n\n📍 Hallazgo sugerido: ${spot.label}\n\nObserva la alerta parpadeante por unos segundos.`);
             setTimeout(() => helpPin.remove(), 5000);
-            availableHelps--;
-            updateHelpCounter();
         };
 
         function loadScene(id) {
@@ -568,7 +582,30 @@
             document.getElementById("report-modal").classList.remove("hidden");
         };
 
-        document.getElementById("btn-close-report").onclick = () => document.getElementById("report-modal").classList.add("hidden");
+        // CORRECCIÓN 2: Función para reiniciar completamente el sistema y volver a la pantalla de nombre automáticamente
+        function resetAppToRegistration() {
+            // Ocultar modal de reporte y contenido principal
+            document.getElementById("report-modal").classList.add("hidden");
+            mainContent.classList.remove("grid");
+            mainContent.classList.add("hidden");
+            
+            // Vaciar y reiniciar variables del estado
+            studentName = "";
+            studentNameInput.value = "";
+            availableHelps = 3;
+            currentSceneId = 1;
+            
+            // Limpiar el mapa de respuestas del objeto global
+            for (let member in studentAnswers) delete studentAnswers[member];
+            
+            // Mostrar de nuevo el login inicial
+            registrationModal.classList.remove("hidden");
+        }
+
+        // Ejecutar el reinicio total al cerrar el modal de reporte
+        document.getElementById("btn-close-report").onclick = function() {
+            resetAppToRegistration();
+        };
         
         async function checkAdminButton() {
             const results = await loadResultsFromFirebase();
