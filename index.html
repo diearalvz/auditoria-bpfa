@@ -164,7 +164,7 @@
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // ==================== DATASET VERIFICADO (CON CAMBIOS) ====================
+        // ==================== DATASET VERIFICADO ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -317,7 +317,6 @@
         document.getElementById("btn-close-admin").onclick = () => adminModal.classList.add("hidden");
         btnAdmin.onclick = () => showAdminPanel();
         btnCancelPassword.onclick = () => passwordModal.classList.add("hidden");
-        
         btnVerifyPassword.onclick = function() {
             if (adminPassword.value === ADMIN_PASSWORD) {
                 isAdminAuthenticated = true;
@@ -361,7 +360,7 @@
             }
         };
 
-        // LÓGICA DE FLUJO PRINCIPAL REPARADA
+        // LÓGICA DE FLUJO PRINCIPAL
         btnStart.onclick = function() {
             studentName = studentNameInput.value.trim();
             if (studentName === "") {
@@ -508,8 +507,8 @@
                 document.getElementById("empty-state")?.remove();
                 createPinAndTextarea(hit, "");
                 studentAnswers[currentSceneId].findings[hit.id] = "";
-                if (window.navigator?.vibrate) window.navigator.vibrate(50
-                                                                        }
+                if (window.navigator?.vibrate) window.navigator.vibrate(55);
+            }
         });
 
         btnConforme.onclick = function() {
