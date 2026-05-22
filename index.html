@@ -143,7 +143,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+        
         // Configuración
         const firebaseConfig = {
             apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
@@ -153,12 +153,10 @@
             messagingSenderId: "357351478133",
             appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
         };
-        
         let db = null;
         const RESULTS_COLLECTION = "auditoria_resultados";
         const ADMIN_PASSWORD = "1234";
 
-        // Intentar conectar de forma asíncrona sin congelar la app si falla
         try {
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -166,7 +164,7 @@
             console.error("Firebase no se pudo conectar. Trabajando en modo Offline.", e);
         }
 
-        // Dataset idéntico
+        // Dataset corregido
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -181,8 +179,8 @@
             4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
                 { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
-                { id: "e5_p3", x: 50, y: 66, r: 13, label: " Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ", q: "¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
+                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" },
+                { id: "e5_p3", x: 50, y: 66, r: 13, label: "Paredes con manchas de humedad", q: "¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
             ] },
             6: { title: "Escena 6: Área de Residuos / Zona de Desechos", isClean: false, image: "assets/escena6.png", hotspots: [
                 { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
@@ -198,7 +196,6 @@
         let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
         const studentAnswers = {};
 
-        // Mapping DOM Elements
         const sceneImage = document.getElementById("scene-image");
         const sceneTitle = document.getElementById("scene-title");
         const progressText = document.getElementById("progress-text");
@@ -283,7 +280,6 @@
             html += `</tbody></table></div>`;
             document.getElementById("admin-content").innerHTML = html;
 
-            // Asignar eventos dinámicos de manera limpia
             document.querySelectorAll(".btn-view-detail").forEach(b => b.onclick = () => viewResultDetail(b.getAttribute("data-id")));
             document.querySelectorAll(".btn-delete").forEach(b => b.onclick = () => deleteResult(b.getAttribute("data-id")));
         }
@@ -322,12 +318,10 @@
             }
         }
 
-        // Eventos Admin
         document.getElementById("btn-refresh").onclick = () => showAdminPanel();
         document.getElementById("btn-close-admin").onclick = () => adminModal.classList.add("hidden");
         btnAdmin.onclick = () => showAdminPanel();
         btnCancelPassword.onclick = () => passwordModal.classList.add("hidden");
-
         btnVerifyPassword.onclick = () => {
             if (adminPassword.value === ADMIN_PASSWORD) {
                 isAdminAuthenticated = true;
@@ -339,7 +333,7 @@
                 adminPassword.value = "";
             }
         };
-
+        
         document.getElementById("btn-export-csv").onclick = async () => {
             const results = await loadResultsFromFirebase();
             if (!results.length) return;
@@ -371,7 +365,6 @@
             }
         };
 
-        // --- FLUJO DEL SIMULADOR ---
         btnStart.onclick = function() {
             studentName = studentNameInput.value.trim();
             if (studentName === "") {
@@ -424,7 +417,6 @@
             helpPin.style.top = `${spot.y}%`;
             helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm">?</span>`;
             pinsOverlay.appendChild(helpPin);
-            
             alert(`💡 Ayuda Utilizada\n\n📍 Hallazgo cercano: ${spot.label}\n\nMira el círculo parpadeante en pantalla.`);
             setTimeout(() => helpPin.remove(), 5000);
             availableHelps--;
@@ -445,7 +437,6 @@
             btnConforme.textContent = "✅ Marcar como Conforme";
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
-            
             document.getElementById("scroll-wrapper").scrollLeft = 0;
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
             
@@ -518,10 +509,8 @@
                 btnConforme.disabled = true;
                 btnConforme.classList.add("opacity-40");
                 document.getElementById("empty-state")?.remove();
-                
                 createPinAndTextarea(hit, "");
-                studentAnswers[currentSceneId].findings[hit.id] = ""; // Inicializar vacío
-                
+                studentAnswers[currentSceneId].findings[hit.id] = "";
                 if (window.navigator?.vibrate) window.navigator.vibrate(50);
             }
         });
@@ -584,7 +573,7 @@
         };
 
         document.getElementById("btn-close-report").onclick = () => document.getElementById("report-modal").classList.add("hidden");
-
+        
         async function checkAdminButton() {
             const results = await loadResultsFromFirebase();
             if (results && results.length > 0) {
@@ -592,7 +581,6 @@
             }
         }
         
-        // Ejecución segura inicial
         checkAdminButton();
     </script>
 </body>
