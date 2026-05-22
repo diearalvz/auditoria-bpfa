@@ -1,217 +1,612 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador de Auditoría - BPFA</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-<style>
-* { -webkit-tap-highlight-color: transparent; }
-html { scroll-behavior: smooth; }
-.modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
-.toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Simulador de Auditoría - BPFA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        .hotspot-marker { transform: translate(-50%, -50%); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } 50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; } }
+        
+        /* Ajustes específicos para móviles */
+        @media (max-width: 768px) { 
+            .hotspot-marker { width: 44px !important; height: 44px !important; } 
+            .hotspot-marker span { width: 32px !important; height: 32px !important; font-size: 16px !important; } 
+            textarea { font-size: 14px !important; } 
+            button { min-height: 48px; } 
+            /* Forzamos a que la imagen tenga un ancho mínimo en móviles para que no se miniaturice */
+            #image-viewport {
+                min-width: 650px; /* Tamaño ideal para explorar con scroll sin deformar */
+                position: relative;
+            }
+        }
+        
+        html { scroll-behavior: smooth; }
+        .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
+        .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
+        .password-modal { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(8px); }
+        #main-content { display: none; }
+    </style>
 </head>
-
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
 
-<!-- Modal de registro -->
-<div id="registration-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6">
-    <h2 class="text-2xl font-bold text-amber-500 mb-4">📋 Auditoría BPFA</h2>
-    <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nombre completo del estudiante:</label>
-    <input type="text" id="student-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ej: Juan Pérez">
-    <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6">🚀 Comenzar Auditoría</button>
-  </div>
-</div>
-
-<header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
-  <div>
-    <h1 class="text-lg md:text-xl font-bold text-amber-400">PLANTA INTERACTIVA BPFA</h1>
-    <p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p>
-  </div>
-  <div class="flex gap-3">
-    <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">3</span></div>
-    <div class="bg-slate-700 px-3 py-1 rounded-lg"><span class="text-xs">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
-  </div>
-</header>
-
-<main id="main-content" class="hidden flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
-  <div class="lg:col-span-2">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-      <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
-        <span class="font-bold text-sm" id="scene-title">Escena</span>
-        <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded">💡 Ayuda</button>
-      </div>
-      <div class="w-full overflow-x-auto overflow-y-hidden" id="scroll-wrapper">
-        <div class="relative w-full cursor-crosshair" id="image-viewport">
-          <img id="scene-image" src="" class="w-full h-auto block select-none">
-          <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
+    <div id="registration-modal" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+            <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
+                <h2 class="text-2xl font-bold text-amber-400">📋 BPFA Auditoría</h2>
+                <p class="text-sm text-gray-300">Sistema de Evaluación de Buenas Prácticas</p>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">👤 Nombre completo del estudiante:</label>
+                <input type="text" id="student-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ej: Juan Pablo Pérez García">
+                <p class="text-xs text-gray-500 mt-2">⚠️ Tus respuestas se guardarán en la nube</p>
+                <button id="btn-start" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6">🚀 Comenzar Auditoría</button>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <div class="flex flex-col gap-4">
-    <div class="bg-white p-4 rounded-xl shadow-lg flex-1">
-      <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0 hallazgos</span></h3>
-      <div id="questions-container" class="mt-3 space-y-3 max-h-[280px] overflow-y-auto">
-        <div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>
-      </div>
-      <div class="flex gap-2 mt-3">
-        <button id="btn-prev" class="w-full bg-slate-500 text-white font-bold py-3 rounded-xl hidden">⬅️ Escena Anterior</button>
-        <button id="btn-next" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl">Siguiente Escena ➡️</button>
-      </div>
-      <button id="btn-finish" class="w-full bg-amber-500 text-slate-900 font-bold py-3 rounded-xl mt-3 hidden">💾 Finalizar Auditoría</button>
+    <div id="password-modal" class="fixed inset-0 password-modal z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+             <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
+                <h2 class="text-2xl font-bold text-amber-400">🔒 Acceso Restringido</h2>
+                <p class="text-sm text-gray-300">Panel de Administrador</p>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">🔐 Contraseña de administrador:</label>
+                <input type="password" id="admin-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ingrese la contraseña">
+                <button id="btn-verify-password" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6">🔓 Acceder al Panel</button>
+                <button id="btn-cancel-password" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl mt-3">❌ Cancelar</button>
+            </div>
+        </div>
     </div>
-  </div>
-</main>
 
-<script>
-// ==================== FIREBASE ====================
-const firebaseConfig = {
-  apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
-  authDomain: "equ-mat-ins.firebaseapp.com",
-  projectId: "equ-mat-ins",
-  storageBucket: "equ-mat-ins.firebasestorage.app",
-  messagingSenderId: "357351478133",
-  appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const RESULTS_COLLECTION = "auditoria_resultados";
+    <div id="admin-panel" class="fixed bottom-4 right-4 z-40 hidden">
+        <button id="btn-admin" class="bg-slate-800 hover:bg-slate-900 text-white rounded-full p-3 shadow-lg transition-all">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </button>
+    </div>
 
-// ==================== DATASET ====================
-const dataset = {
-  1: { title: "Escena 1: Muelle de Ingreso", isClean: false, image: "assets/escena1.png", hotspots: [
-    { id: "e1_p1", x: 52, y: 85, r: 13, label: "Botas oscuras", q: "¿Por qué las botas deben ser de color claro en áreas de inspección y no oscuras?" }
-  ]},
-  2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
-    { id: "e2_p1", x: 23, y: 72, r: 13, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento al estar sobre un suelo húmedo?" },
-    { id: "e2_p2", x: 80, y: 64, r: 13, label: "Estiba Dañada", q: "¿Por qué es peligroso mantener estibas rotas o astilladas?" },
-    { id: "e2_p3", x: 30, y: 55, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos completamente pegados a las paredes?" }
-  ]},
-  3: { title: "Escena 3: Estanterías de Almacenamiento Especial", isClean: false, image: "assets/escena3.png", hotspots: [
-    { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "¿Por qué ubicar sacos medicados sobre alimentos comerciales es un error grave?" },
-    { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de polvillo medicado", q: "¿Qué consecuencias trae si el polvo medicado cae en sacos inferiores?" }
-  ]},
-  4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
-  5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
-    { id: "e5_p1", x: 20,  5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
-    { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "¿Por qué la humedad compromete la calidad de la planta?" },
-    { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos si las lámparas no tienen cubierta?" },
-    { id: "e5_p3", x: 40, y: 50, r: 13, label: "Paredes con manchas de humedad", q: "Las paredes presentan moho y deterioro. ¿Qué acción correctiva se debe realizar para cumplir la normativa?" }
-  ]},
-  6: { title: "Escena 6: Área de Residuos o Zona de Desechos", isClean: false, image: "assets/escena6.png", hotspots: [
-    { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "¿Qué problemas de bioseguridad acarrea dejar alimento esparcido en el suelo?" },
-    { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "¿Cuál es el error de dejar escobas y traperos tirados en el piso en lugar de guardarlos?" }
-  ]},
-  7: { title: "Escena 7: Área de Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
-    { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto a maleza", q: "¿Qué norma de instalaciones se incumple al abrir hacia un patio con maleza sin barrera?" },
-    { id: "e7_p2", x: 12, y: 68, r: 13, label: "Luz inferior en puerta", q: "¿Por qué es una falla grave de hermeticidad tener un espacio libre en la puerta?" },
-    { id: "e7_p3", x: 14, y: 84, r: 13, label: "Estación de cebo destruida", q: "¿Qué medida correctiva se debe registrar ante una trampa de plagas rota?" }
-  ]}
-};
+    <div id="admin-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div class="bg-slate-800 text-white p-5 rounded-t-2xl flex justify-between items-center sticky top-0">
+                <div><h2 class="text-xl font-bold text-amber-400">📊 Panel de Administrador</h2><p class="text-xs text-gray-300">Resultados en la nube</p></div>
+                <div class="flex gap-2">
+                    <button id="btn-refresh" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">🔄 Refrescar</button>
+                    <button id="btn-export-csv" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">📊 Exportar CSV</button>
+                    <button id="btn-clear-all" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">🗑️ Limpiar Todo</button>
+                    <button id="btn-close-admin" class="text-white hover:text-amber-400 text-2xl">&times;</button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto" id="admin-content"><div class="text-center py-10 text-gray-500">Cargando resultados...</div></div>
+        </div>
+    </div>
 
-// ==================== VARIABLES ====================
-let currentSceneId = 1;
-let availableHelps = 3;
-let studentName = "";
-const studentAnswers = {};
+    <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
+        <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLATAER INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
+        <div class="flex gap-3">
+            <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">3</span></div>
+            <div class="bg-slate-700 px-3 py-1 rounded-lg"><span class="text-xs">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
+        </div>
+    </header>
 
-// ==================== FUNCIONES ====================
-function updateHelpCounter() {
-  helpCounter.textContent = availableHelps;
-  btnHelp.disabled = availableHelps === 0;
-  btnHelp.textContent = availableHelps === 0 ? "💔 Sin Ayudas" : "💡 Ayuda";
-}
+    <main id="main-content" class="flex-1 max-w-7xl mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
+                    <span class="font-bold text-sm" id="scene-title">Estación de Inspección</span>
+                    <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded">💡 Ayuda</button>
+                </div>
+                <div class="w-full overflow-x-auto overflow-y-hidden" id="scroll-wrapper">
+                    <div class="relative w-full cursor-crosshair" id="image-viewport">
+                        <img id="scene-image" src="" class="w-full h-auto block select-none">
+                        <div id="pins-overlay" class="absolute inset-0 pointer-events-none"></div>
+                    </div>
+                </div>
+                <div class="p-2 bg-gray-50 text-xs text-center flex items-center justify-center gap-1">
+                    <span>📱 Toca las anomalías. En móvil puedes deslizar la imagen hacia los lados.</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col gap-4">
+            <div class="bg-white p-4 rounded-xl shadow-lg">
+                <h3 class="font-bold border-b pb-2">📋 Criterio de Estación</h3>
+                <p class="text-xs mt-2">Analiza detenidamente el entorno visual. Si consideras que esta zona cumple completamente con el orden, higiene y especificaciones normativas, presiona el botón de conformidad.</p>
+                <button id="btn-conforme" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl mt-3">✅ Marcar como Conforme</button>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-lg flex-1">
+                <h3 class="font-bold border-b pb-2 flex justify-between"><span>🔍 Hallazgos Detectados</span><span id="findings-counter" class="text-xs bg-slate-200 px-2 rounded-full">0 hallazgos</span></h3>
+                <div id="questions-container" class="mt-3 space-y-3 max-h-[280px] overflow-y-auto">
+                    <div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>
+                </div>
+                <button id="btn-next" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl mt-3 hidden">Siguiente Escena ➡️</button>
+                <button id="btn-finish" class="w-full bg-amber-500 text-slate-900 font-bold py-3 rounded-xl mt-3 hidden">💾 Finalizar Auditoría</button>
+            </div>
+        </div>
+    </main>
 
-function revealNextMissingHotspot() {
-  if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return; }
-  const scene = dataset[currentSceneId];
-  const currentFindings = studentAnswers[currentSceneId]?.findings || {};
-  const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
-  if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return; }
-  const spot = missing[0];
-  alert(`💡 Ayuda\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
-  availableHelps--; // siempre descuenta
-  updateHelpCounter();
-}
+    <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0 shadow">
+                <div>
+                    <h2 class="font-bold text-amber-400 text-lg">📝 REPORTE FINAL DE AUDITORÍA</h2>
+                    <p id="report-student-name" class="text-xs text-gray-300"></p>
+                </div>
+                <button onclick="closeReportModal()" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
+            </div>
+            <div class="p-5" id="report-content"></div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                <button onclick="window.print()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    🖨️ Guardar Reporte en PDF / Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
 
-btnHelp.onclick = revealNextMissingHotspot;
+    <script>
+        // ==================== FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1rYU299raY0U3N_qeovECiYIZl5aNTlM",
+            authDomain: "equ-mat-ins.firebaseapp.com",
+            projectId: "equ-mat-ins",
+            storageBucket: "equ-mat-ins.firebasestorage.app",
+            messagingSenderId: "357351478133",
+            appId: "1:357351478133:web:bbe8bff7e5e43f66f0f93c"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const RESULTS_COLLECTION = "auditoria_resultados";
+        const ADMIN_PASSWORD = "1234";
 
-function loadScene(id) {
-  currentSceneId = id;
-  const scene = dataset[id];
-  sceneImage.src = scene.image;
-  sceneTitle.textContent = scene.title;
-  progressText.textContent = `Escena ${id} de 7`;
-  pinsOverlay.innerHTML = "";
-  questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>`;
-  findingsCounter.textContent = "0 hallazgos";
-  btnPrev.classList.toggle("hidden", id === 1);
-  btnNext.classList.toggle("hidden", id === 7);
-  btnFinish.classList.toggle("hidden", id !== 7);
-  if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
-}
+        // ==================== DATASET ====================
+        const dataset = {
+            1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
+            2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
+                { id: "e2_p1", x: 23, y: 72, r: 13, label: "Piso Húmedo", q: "¿Qué riesgo corren los bultos de alimento para animales al ser arrumados directamente sobre un suelo con manchas de humedad?" },
+                { id: "e2_p2", x: 80, y: 64, r: 13, label: "Estiba Dañada", q: "¿Por qué es peligroso para el producto mantener estibas rotas o astilladas dentro de los pasillos de almacenamiento?" },
+                { id: "e2_p3", x: 18, y: 55, r: 13, label: "Arrume contra pared", q: "¿Por qué está mal acomodar los bultos de alimento completamente pegados a las paredes del establecimiento?" }
+            ] },
+            3: { title: "Escena 3: Estanterías de Almacenamiento Especial", isClean: false, image: "assets/escena3.png", hotspots: [
+                { id: "e3_p1", x: 30, y: 18, r: 13, label: "Distribución vertical incorrecta", q: "Explica por qué ubicar sacos de alimento medicado en los niveles de arriba, justo sobre alimentos comerciales normales, es un error grave de distribución." },
+                { id: "e3_p2", x: 62, y: 32, r: 13, label: "Derrame de polvillo medicado", q: "Al ver este polvo de medicamento derramado sobre el estante, ¿qué consecuencias crees que traería para la empresa si llega a caer dentro de los sacos inferiores?" }
+            ] },
+            4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
+            5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
+                { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
+                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "¿Qué peligro físico corren los alimentos almacenados si las lámparas del techo no tienen una pantalla o cubierta protectora de plástico?" }
+            ] },
+            6: { title: "Escena 6: Zona de Control de Desperdicios", isClean: false, image: "assets/escena6.png", hotspots: [
+                { id: "e6_p1", x: 45, y: 55, r: 13, label: "Saco roto y derrame", q: "Dejar alimento esparcido y acumulado en el suelo del pasillo, ¿qué problemas de bioseguridad acarrea para la bodega?" },
+                { id: "e6_p2", x: 70, y: 68, r: 13, label: "Herramientas de aseo en el suelo", q: "💡 ¿Cuál es el error de dejar las escobas y traperos tirados en el piso encima del alimento en lugar de guardarlos adecuadamente?" }
+            ] },
+            7: { title: "Escena 7: Área de Despacho Perimetral", isClean: false, image: "assets/escena7.png", hotspots: [
+                { id: "e7_p1", x: 45, y: 25, r: 13, label: "Portón abierto a maleza", q: "Al abrir por completo la puerta hacia un patio externo lleno de maleza alta sin ninguna barrera de protección, ¿qué norma de instalaciones se está incumpliendo?" },
+                { id: "e7_p2", x: 12, y: 68, r: 13, label: "Luz inferior en estructura de puerta", q: "En la esquina inferior de la puerta cerrada se nota un espacio libre con el suelo. ¿Por qué es una falla grave de hermeticidad?" },
+                { id: "e7_p3", x: 14, y: 84, r: 13, label: "Estación de cebo destruida", q: "Encuentras la trampa de control de plagas rota y descuidada en el piso. ¿Qué medida correctiva se debe registrar ante este hallazgo?" }
+            ] }
+        };
 
-btnNext.onclick = () => { if (currentSceneId < 7) loadScene(currentSceneId + 1); };
-btnPrev.onclick = () => { if (currentSceneId > 1) loadScene(currentSceneId - 1); };
+        let currentSceneId = 1, availableHelps = 3, studentName = "", isAdminAuthenticated = false;
+        const studentAnswers = {};
 
-btnFinish.onclick = async () => {
-  await db.collection(RESULTS_COLLECTION).add({
-    studentName,
-    timestamp: new Date().toISOString(),
-    fechaLegible: new Date().toLocaleString(),
-    helpsUsed: 3 - availableHelps,
-    totalHelps: 3,
-    answers: studentAnswers
-  });
-  alert("✅ Auditoría guardada en la nube");
-  // volver al inicio
-  studentName = "";
-  availableHelps = 3;
-  updateHelpCounter();
-  currentSceneId = 1;
-  loadScene(1);
-  document.getElementById("registration-modal").style.display = "flex";
-  mainContent.style.display = "none";
-};
+        // DOM Elements
+        const sceneImage = document.getElementById("scene-image");
+        const sceneTitle = document.getElementById("scene-title");
+        const progressText = document.getElementById("progress-text");
+        const pinsOverlay = document.getElementById("pins-overlay");
+        const questionsContainer = document.getElementById("questions-container");
+        const findingsCounter = document.getElementById("findings-counter");
+        const btnConforme = document.getElementById("btn-conforme");
+        const btnNext = document.getElementById("btn-next");
+        const btnFinish = document.getElementById("btn-finish");
+        const btnHelp = document.getElementById("btn-help");
+        const helpCounter = document.getElementById("help-counter");
+        const imgViewport = document.getElementById("image-viewport");
+        const mainContent = document.getElementById("main-content");
+        const registrationModal = document.getElementById("registration-modal");
+        const studentNameInput = document.getElementById("student-name");
+        const btnStart = document.getElementById("btn-start");
+        const adminPanel = document.getElementById("admin-panel");
+        const btnAdmin = document.getElementById("btn-admin");
+        const adminModal = document.getElementById("admin-modal");
+        const passwordModal = document.getElementById("password-modal");
+        const adminPassword = document.getElementById("admin-password");
+        const btnVerifyPassword = document.getElementById("btn-verify-password");
+        const btnCancelPassword = document.getElementById("btn-cancel-password");
 
-// ==================== REGISTRO ====================
-btnStart.onclick = function() {
-  studentName = studentNameInput.value.trim();
-  if (studentName === "") {
-    alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
-    return;
-  }
-  registrationModal.style.display = "none";
-  mainContent.style.display = "grid";
-  loadScene(1);
-  updateHelpCounter();
-};
+        function showToast(msg, isError = false) { 
+            const t = document.createElement("div");
+            t.className = "toast-notification"; 
+            t.style.background = isError ? "#dc2626" : "#1e293b"; 
+            t.textContent = msg; 
+            document.body.appendChild(t); 
+            setTimeout(() => t.remove(), 3000);
+        }
 
-// Inicialización
-const sceneImage = document.getElementById("scene-image");
-const sceneTitle = document.getElementById("scene-title");
-const progressText = document.getElementById("progress-text");
-const pinsOverlay = document.getElementById("pins-overlay");
-const questionsContainer = document.getElementById("questions-container");
-const findingsCounter = document.getElementById("findings-counter");
-const btnPrev = document.getElementById("btn-prev");
-const btnNext = document.getElementById("btn-next");
-const btnFinish = document.getElementById("btn-finish");
-const btnHelp = document.getElementById("btn-help");
-const helpCounter = document.getElementById("help-counter");
-const registrationModal = document.getElementById("registration-modal");
-const studentNameInput = document.getElementById("student-name");
-const btnStart = document.getElementById("btn-start");
-const mainContent = document.getElementById("main-content");
+        async function saveResultToFirebase() {
+            try {
+                await db.collection(RESULTS_COLLECTION).add({
+                    studentName: studentName,
+                    timestamp: new Date().toISOString(),
+                    fechaLegible: new Date().toLocaleString(),
+                    helpsUsed: 3 - availableHelps,
+                    totalHelps: 3,
+                    answers: studentAnswers
+                });
+                showToast("✅ ¡Resultado guardado en la nube!");
+                return true;
+            } catch (error) {
+                showToast("❌ Error al guardar", true);
+                return false;
+            }
+        }
 
-</script>
+        async function loadResultsFromFirebase() {
+            try {
+                const snapshot = await db.collection(RESULTS_COLLECTION).orderBy("timestamp", "desc").get();
+                const results = [];
+                snapshot.forEach(doc => results.push({ id: doc.id, ...doc.data() }));
+                return results;
+            } catch (error) {
+                showToast("❌ Error al cargar", true);
+                return [];
+            }
+        }
+
+        window.showAdminPanel = async function() {
+            if (!isAdminAuthenticated) { 
+                passwordModal.classList.remove("hidden");
+                return; 
+            }
+            document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">Cargando...</div>';
+            adminModal.classList.remove("hidden");
+            const results = await loadResultsFromFirebase();
+            if (results.length === 0) { 
+                document.getElementById("admin-content").innerHTML = '<div class="text-center py-10">No hay resultados</div>'; 
+                return;
+            }
+            let html = `<div class="mb-4 p-3 bg-blue-50 rounded">📊 Total: ${results.length} auditorías</div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
+            results.forEach((r) => { html += `<tr class="border-b"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/3</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
+            html += `</tbody></table></div>`;
+            document.getElementById("admin-content").innerHTML = html;
+        };
+
+        window.viewResultDetail = async function(id) {
+            const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
+            const r = doc.data();
+            let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas: ${r.helpsUsed}/3</p></div>`;
+            for (let i = 1; i <= 7; i++) {
+                const scene = dataset[i];
+                const ans = r.answers[i] || { markedConforme: false, findings: {} };
+                html += `<div class="border p-2 mb-2 rounded"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
+                if (!scene.isClean && !ans.markedConforme) {
+                    scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
+                } else if (!scene.isClean && ans.markedConforme) {
+                    html += `<span class="text-rose-600 text-xs">❌ Error: No detectó fallas críticas</span>`;
+                } else if (scene.isClean && !ans.markedConforme) {
+                    html += `<span class="text-rose-600 text-xs">❌ Error: Reportó fallas donde no existen</span>`;
+                } else {
+                    html += `<span class="text-emerald-600 text-xs">✨ Correcto</span>`;
+                }
+                html += `</div>`;
+            }
+            document.getElementById("admin-content").innerHTML = html;
+        };
+
+        window.deleteResult = async function(id) {
+            if (confirm("¿Eliminar este resultado?")) {
+                await db.collection(RESULTS_COLLECTION).doc(id).delete();
+                showToast("✅ Eliminado");
+                showAdminPanel();
+            }
+        };
+
+        document.getElementById("btn-refresh").addEventListener("click", () => showAdminPanel());
+        document.getElementById("btn-export-csv").addEventListener("click", async () => {
+            const results = await loadResultsFromFirebase();
+            if (!results.length) return;
+            let csv = "Estudiante,Fecha,Ayudas Usadas,Calificación\n";
+            results.forEach(r => {
+                let score = 0;
+                for (let i = 1; i <= 7; i++) {
+                    const scene = dataset[i];
+                    const ans = r.answers[i] || { markedConforme: false, findings: {} };
+                    if (scene.isClean && ans.markedConforme) score++;
+                    if (!scene.isClean && !ans.markedConforme && Object.keys(ans.findings).length === scene.hotspots.length) score++;
+                }
+                csv += `"${r.studentName || "Anonimo"}","${r.fechaLegible}",${r.helpsUsed},${score}/7\n`;
+            });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+            a.download = `auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        });
+
+        document.getElementById("btn-clear-all").addEventListener("click", async () => {
+            if (confirm("⚠️ ¿Eliminar TODOS los resultados?")) {
+                const results = await loadResultsFromFirebase();
+                for (const r of results) await db.collection(RESULTS_COLLECTION).doc(r.id).delete();
+                showToast("✅ Todos eliminados");
+                showAdminPanel();
+            }
+        });
+
+        document.getElementById("btn-close-admin").addEventListener("click", () => adminModal.classList.add("hidden"));
+        btnAdmin.addEventListener("click", () => showAdminPanel());
+
+        btnVerifyPassword.addEventListener("click", () => {
+            if (adminPassword.value === ADMIN_PASSWORD) {
+                isAdminAuthenticated = true;
+                passwordModal.classList.add("hidden");
+                showAdminPanel();
+                showToast("✅ Acceso concedido");
+            } else {
+                showToast("❌ Contraseña incorrecta", true);
+                adminPassword.value = "";
+            }
+        });
+
+        btnCancelPassword.addEventListener("click", () => passwordModal.classList.add("hidden"));
+        adminPassword.addEventListener("keypress", (e) => { if (e.key === "Enter") btnVerifyPassword.click(); });
+
+        function showNavButtons() { 
+            if (currentSceneId < 7) {
+                btnNext.classList.remove("hidden");
+            } else {
+                btnFinish.classList.remove("hidden");
+            } 
+        }
+
+        btnStart.onclick = function() {
+            studentName = studentNameInput.value.trim();
+            if (studentName === "") {
+                alert("⚠️ Por favor, ingresa tu nombre completo para continuar.");
+                return;
+            }
+            registrationModal.style.display = "none";
+            mainContent.style.display = "grid";
+            updateHelpCounter();
+            loadScene(1);
+        };
+
+        function updateHelpCounter() {
+            helpCounter.textContent = availableHelps;
+            if (availableHelps === 0) { 
+                btnHelp.disabled = true; 
+                btnHelp.classList.add("opacity-50"); 
+                btnHelp.textContent = "💔 Sin Ayudas"; 
+            } else { 
+                btnHelp.disabled = false; 
+                btnHelp.classList.remove("opacity-50"); 
+                btnHelp.textContent = "💡 Ayuda";
+            }
+        }
+
+        function revealNextMissingHotspot() {
+            if (availableHelps <= 0) { alert("❌ No quedan ayudas"); return; }
+            const scene = dataset[currentSceneId];
+            if (scene.isClean) { alert("✅ Esta escena no tiene fallas"); return; }
+            
+            const currentFindings = studentAnswers[currentSceneId]?.findings || {};
+            const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
+            if (missing.length === 0) { alert("🎉 Ya encontraste todas las fallas"); return; }
+            
+            const spot = missing[0];
+            const helpPin = document.createElement("div");
+            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40";
+            helpPin.style.left = `${spot.x}%`; 
+            helpPin.style.top = `${spot.y}%`;
+            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm animate-pulse">?</span>`;
+            pinsOverlay.appendChild(helpPin);
+            alert(`💡 Ayuda #${4 - availableHelps}\n\n📍 ${spot.label}\n\n🔍 Busca en el área indicada.`);
+            setTimeout(() => helpPin.remove(), 4000);
+            availableHelps--;
+            updateHelpCounter();
+        }
+
+        btnHelp.onclick = function() {
+            if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
+            if (studentAnswers[currentSceneId]?.markedConforme) { alert("⚠️ Ya marcaste esta escena como conforme."); return; }
+            revealNextMissingHotspot();
+        };
+
+        function loadScene(id) {
+            currentSceneId = id;
+            const scene = dataset[id];
+            sceneImage.src = scene.image;
+            sceneTitle.textContent = scene.title;
+            progressText.textContent = `Escena ${id} de 7`;
+            pinsOverlay.innerHTML = "";
+            questionsContainer.innerHTML = `<div id="empty-state" class="text-center py-8 text-gray-400">No has marcado ninguna falla</div>`;
+            findingsCounter.textContent = "0 hallazgos";
+            btnConforme.disabled = false;
+            btnConforme.classList.remove("opacity-40", "bg-slate-400");
+            btnConforme.classList.add("bg-emerald-600", "hover:bg-emerald-700");
+            btnConforme.textContent = "✅ Marcar como Conforme";
+            btnNext.classList.add("hidden");
+            btnFinish.classList.add("hidden");
+            
+            // Forzar reseteo del scroll lateral al inicio de la escena
+            document.getElementById("scroll-wrapper").scrollLeft = 0;
+            
+            if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
+            
+            const existing = studentAnswers[id].findings;
+            const isSceneApproved = studentAnswers[id].markedConforme;
+
+            if (isSceneApproved) {
+                btnConforme.disabled = true;
+                btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+                btnConforme.textContent = "🔒 Registrado como Conforme";
+                const empty = document.getElementById("empty-state");
+                if (empty) empty.remove();
+                questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
+                showNavButtons();
+                return;
+            }
+
+            if (Object.keys(existing).length > 0) {
+                const empty = document.getElementById("empty-state");
+                if (empty) empty.remove();
+                btnConforme.disabled = true;
+                btnConforme.classList.add("opacity-40");
+
+                scene.hotspots.forEach(spot => {
+                    if (existing[spot.id]) {
+                        const pin = document.createElement("div");
+                        pin.id = `pin_${spot.id}`;
+                        pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
+                        pin.style.left = `${spot.x}%`;
+                        pin.style.top = `${spot.y}%`;
+                        pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
+                        pinsOverlay.appendChild(pin);
+                        
+                        const box = document.createElement("div");
+                        box.className = "bg-slate-50 p-2 rounded border border-red-200";
+                        box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${spot.label}</label><p class="text-xs text-gray-600 mt-1">${spot.q}</p><textarea id="input_${spot.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white">${existing[spot.id]}</textarea>`;
+                        questionsContainer.appendChild(box);
+                        
+                        document.getElementById(`input_${spot.id}`).addEventListener("input", function() { 
+                            studentAnswers[currentSceneId].findings[spot.id] = this.value; 
+                        });
+                    }
+                });
+                findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
+                if (Object.keys(existing).length === scene.hotspots.length) showNavButtons();
+            }
+        }
+
+        imgViewport.addEventListener("click", function(e) {
+            const scene = dataset[currentSceneId];
+            if (studentAnswers[currentSceneId].markedConforme) return;
+            const rect = imgViewport.getBoundingClientRect();
+            const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+            const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            let hit = null;
+            for (let spot of scene.hotspots) {
+                if (Math.hypot(clickX - spot.x, clickY - spot.y) <= spot.r) { hit = spot; break; }
+            }
+            
+            if (hit && !document.getElementById(`pin_${hit.id}`)) {
+                btnConforme.disabled = true;
+                btnConforme.classList.add("opacity-40");
+                const empty = document.getElementById("empty-state");
+                if (empty) empty.remove();
+                
+                const pin = document.createElement("div");
+                pin.id = `pin_${hit.id}`;
+                pin.className = "absolute bg-red-600/40 border-2 border-red-600 rounded-full w-8 h-8 flex items-center justify-center pointer-events-none";
+                pin.style.left = `${hit.x}%`;
+                pin.style.top = `${hit.y}%`;
+                pin.innerHTML = `<span class="bg-red-700 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">!</span>`;
+                pinsOverlay.appendChild(pin);
+                
+                const box = document.createElement("div");
+                box.className = "bg-slate-50 p-2 rounded border border-red-200";
+                box.innerHTML = `<label class="text-xs font-bold text-red-700">🚨 ${hit.label}</label><p class="text-xs text-gray-600 mt-1">${hit.q}</p><textarea id="input_${hit.id}" rows="2" class="w-full p-2 border rounded text-xs mt-1 bg-white"></textarea>`;
+                questionsContainer.appendChild(box);
+                
+                document.getElementById(`input_${hit.id}`).addEventListener("input", function() {
+                    studentAnswers[currentSceneId].findings[hit.id] = this.value;
+                    const typedCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                    findingsCounter.textContent = `${typedCount} de ${scene.hotspots.length} fallas`;
+                    if (typedCount === scene.hotspots.length) showNavButtons();
+                });
+                
+                const initialCount = Object.keys(studentAnswers[currentSceneId].findings).length;
+                findingsCounter.textContent = `${initialCount} de ${scene.hotspots.length} fallas`;
+                
+                if (window.navigator?.vibrate) window.navigator.vibrate(50);
+            }
+        });
+
+        btnConforme.addEventListener("click", () => {
+            studentAnswers[currentSceneId].markedConforme = true;
+            btnConforme.disabled = true;
+            btnConforme.className = "w-full bg-slate-400 text-white font-bold py-3 rounded-xl cursor-not-allowed";
+            btnConforme.textContent = "🔒 Registrado como Conforme";
+            const empty = document.getElementById("empty-state");
+            if (empty) empty.remove();
+            questionsContainer.innerHTML = `<div class="p-4 bg-emerald-50 rounded text-center text-emerald-700">✅ Área validada como libre de anomalías</div>`;
+            showNavButtons();
+        });
+
+        btnNext.addEventListener("click", () => { 
+            if (currentSceneId < 7) loadScene(currentSceneId + 1); 
+        });
+
+        function generateReportHTML() {
+            let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
+                            <strong>👤 Estudiante:</strong> ${studentName}<br>
+                            📅 <strong>Fecha de envío:</strong> ${new Date().toLocaleString()}<br>
+                            🎯 <strong>Comodines de ayuda utilizados:</strong> ${3 - availableHelps} de 3
+                        </div>
+                        <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                            <thead>
+                                <tr class="bg-slate-800 text-white text-left">
+                                    <th class="p-3">Escenario Evaluado</th>
+                                    <th class="p-3 text-center">Criterio Asignado</th>
+                                    <th class="p-3">Sustentación Técnica y Argumentativa</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            for (let id = 1; id <= 7; id++) {
+                const scene = dataset[id];
+                const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
+                html += `<tr class="border-b hover:bg-gray-50 bg-white">
+                            <td class="p-3 font-semibold text-slate-700">${scene.title}</td>
+                            <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⚠️ Con fallas</span>'}</td>
+                            <td class="p-3 text-slate-600">`;
+                if (scene.isClean) {
+                    if (ans.markedConforme) {
+                        html += '<span class="text-emerald-600 font-medium">✨ Correcto: Validó zona sin anomalías.</span>';
+                    } else {
+                        html += '<span class="text-rose-600 font-medium">❌ Error: Reportó fallas inexistentes en zona limpia.</span>';
+                    }
+                } else if (ans.markedConforme) {
+                    html += '<span class="text-rose-600 font-medium">❌ Error grave: Omitió fallas de infraestructura críticas para la bioseguridad.</span>';
+                } else {
+                    scene.hotspots.forEach(s => {
+                        const respuesta = ans.findings[s.id] || '⚠️ No respondido';
+                        html += `<div class="bg-gray-50 p-2.5 mb-2 rounded-lg border-l-4 border-red-500 shadow-sm">
+                                    <strong class="text-slate-800 block text-xs">📍 Hallazgo: ${s.label}</strong>
+                                    <span class="text-gray-600 text-xs italic">"${respuesta}"</span>
+                                </div>`;
+                    });
+                }
+                html += `</td></tr>`;
+            }
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        btnFinish.addEventListener("click", async () => {
+            await saveResultToFirebase();
+            document.getElementById("report-content").innerHTML = generateReportHTML();
+            document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
+            document.getElementById("report-modal").style.display = "flex";
+            document.getElementById("report-modal").classList.remove("hidden");
+        });
+
+        window.closeReportModal = () => {
+            document.getElementById("report-modal").classList.add("hidden");
+            document.getElementById("report-modal").style.display = "none";
+        };
+
+        async function checkAdminButton() {
+            const results = await loadResultsFromFirebase();
+            if (results.length > 0) {
+                adminPanel.classList.remove("hidden");
+            }
+        }
+        
+        checkAdminButton();
+    </script>
 </body>
 </html>
