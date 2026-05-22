@@ -53,7 +53,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
              <div class="bg-slate-800 text-white p-6 rounded-t-2xl text-center">
                 <h2 class="text-2xl font-bold text-amber-400">🔒 Acceso Restringido</h2>
-                <p class="text-sm text-gray-300">Panel de Administrator</p>
+                <p class="text-sm text-gray-300">Panel de Administrador</p>
             </div>
             <div class="p-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">🔐 Contraseña de administrador:</label>
@@ -129,10 +129,21 @@
     </main>
 
     <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0"><div><h2 class="font-bold text-amber-400">REPORTE DE AUDITORÍA</h2><p id="report-student-name" class="text-xs"></p></div><button onclick="closeReportModal()" class="text-white text-2xl">&times;</button></div>
-            <div class="p-4" id="report-content"></div>
-            <div class="p-3 bg-gray-50 border-t flex justify-end gap-2"><button onclick="copyReportToClipboard()" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm">📋 Copiar Reporte</button><button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ Guardar PDF</button></div>
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0 shadow">
+                <div>
+                    <h2 class="font-bold text-amber-400 text-lg">📝 REPORTE FINAL DE AUDITORÍA</h2>
+                    <p id="report-student-name" class="text-xs text-gray-300"></p>
+                </div>
+                <button onclick="closeReportModal()" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
+            </div>
+            <div class="p-5" id="report-content"></div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                <button onclick="window.print()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    🖨️ Guardar Reporte en PDF / Imprimir
+                </button>
+            </div>
         </div>
     </div>
 
@@ -419,7 +430,7 @@
             btnNext.classList.add("hidden");
             btnFinish.classList.add("hidden");
             
-            // Forzar reseteo del scroll al inicio de la escena para que empiece desde la izquierda
+            // Forzar reseteo del scroll lateral al inicio de la escena
             document.getElementById("scroll-wrapper").scrollLeft = 0;
             
             if (!studentAnswers[id]) studentAnswers[id] = { markedConforme: false, findings: {} };
@@ -530,42 +541,42 @@
         });
 
         function generateReportHTML() {
-            let html = `<div class="p-3 bg-amber-50 rounded mb-4">
-                            <strong>👤 Estudiante: ${studentName}</strong><br>
-                            📅 ${new Date().toLocaleString()}<br>
-                            🎯 Ayudas utilizadas: ${3 - availableHelps} de 3
+            let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
+                            <strong>👤 Estudiante:</strong> ${studentName}<br>
+                            📅 <strong>Fecha de envío:</strong> ${new Date().toLocaleString()}<br>
+                            🎯 <strong>Comodines de ayuda utilizados:</strong> ${3 - availableHelps} de 3
                         </div>
                         <div class="overflow-x-auto">
-                        <table class="w-full text-sm border-collapse">
+                        <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
                             <thead>
-                                <tr class="bg-slate-100">
-                                    <th class="p-2">Escenario</th>
-                                    <th class="p-2">Criterio</th>
-                                    <th class="p-2">Argumentación</th>
+                                <tr class="bg-slate-800 text-white text-left">
+                                    <th class="p-3">Escenario Evaluado</th>
+                                    <th class="p-3 text-center">Criterio Asignado</th>
+                                    <th class="p-3">Sustentación Técnica y Argumentativa</th>
                                 </tr>
                             </thead>
                             <tbody>`;
             for (let id = 1; id <= 7; id++) {
                 const scene = dataset[id];
                 const ans = studentAnswers[id] || { markedConforme: false, findings: {} };
-                html += `<tr class="border-b">
-                            <td class="p-2 font-medium">${scene.title}</td>
-                            <td class="p-2">${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}</td>
-                            <td class="p-2">`;
+                html += `<tr class="border-b hover:bg-gray-50 bg-white">
+                            <td class="p-3 font-semibold text-slate-700">${scene.title}</td>
+                            <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-bold">⚠️ Con fallas</span>'}</td>
+                            <td class="p-3 text-slate-600">`;
                 if (scene.isClean) {
                     if (ans.markedConforme) {
-                        html += '<span class="text-emerald-600">✨ Correcto: Validó zona sin fallas</span>';
+                        html += '<span class="text-emerald-600 font-medium">✨ Correcto: Validó zona sin anomalías.</span>';
                     } else {
-                        html += '<span class="text-rose-600">❌ Error: Reportó fallas donde no existen</span>';
+                        html += '<span class="text-rose-600 font-medium">❌ Error: Reportó fallas inexistentes en zona limpia.</span>';
                     }
                 } else if (ans.markedConforme) {
-                    html += '<span class="text-rose-600">❌ Error grave: No detectó fallas críticas</span>';
+                    html += '<span class="text-rose-600 font-medium">❌ Error grave: Omitió fallas de infraestructura críticas para la bioseguridad.</span>';
                 } else {
                     scene.hotspots.forEach(s => {
                         const respuesta = ans.findings[s.id] || '⚠️ No respondido';
-                        html += `<div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-400">
-                                    <strong class="text-slate-700">📍 ${s.label}</strong><br>
-                                    <span class="text-gray-600 text-xs">${respuesta}</span>
+                        html += `<div class="bg-gray-50 p-2.5 mb-2 rounded-lg border-l-4 border-red-500 shadow-sm">
+                                    <strong class="text-slate-800 block text-xs">📍 Hallazgo: ${s.label}</strong>
+                                    <span class="text-gray-600 text-xs italic">"${respuesta}"</span>
                                 </div>`;
                     });
                 }
@@ -586,12 +597,6 @@
         window.closeReportModal = () => {
             document.getElementById("report-modal").classList.add("hidden");
             document.getElementById("report-modal").style.display = "none";
-        };
-
-        window.copyReportToClipboard = () => {
-            const reportText = document.getElementById("report-content").innerText;
-            navigator.clipboard.writeText(reportText);
-            alert("✅ Reporte copiado al portapapeles");
         };
 
         async function checkAdminButton() {
