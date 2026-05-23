@@ -26,6 +26,13 @@
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); }
         .toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px; z-index: 1000; font-size: 14px; }
         .password-modal { background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(8px); }
+        
+        /* Estilos de impresión optimizados */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
@@ -53,7 +60,7 @@
             </div>
             <div class="p-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">🔐 Contraseña de administrador:</label>
-                <input type="password" id="admin-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ingrese la contraseña">
+                <input type="text" id="admin-password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500" placeholder="Ingrese su clave">
                 <button id="btn-verify-password" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3 px-4 rounded-xl mt-6">🔓 Acceder al Panel</button>
                 <button id="btn-cancel-password" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl mt-3">❌ Cancelar</button>
             </div>
@@ -71,10 +78,10 @@
             <div class="bg-slate-800 text-white p-5 rounded-t-2xl flex justify-between items-center sticky top-0">
                 <div><h2 class="text-xl font-bold text-amber-400">📊 Panel de Administrador</h2><p class="text-xs text-gray-300">Resultados en la nube</p></div>
                 <div class="flex gap-2">
-                    <button id="btn-refresh" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">🔄 Refrescar</button>
-                    <button id="btn-export-csv" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">📊 Exportar CSV</button>
-                    <button id="btn-clear-all" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">🗑️ Limpiar Todo</button>
-                    <button id="btn-close-admin" class="text-white hover:text-amber-400 text-2xl">&times;</button>
+                    <button id="btn-refresh" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">🔄 Refrescar</button>
+                    <button id="btn-export-csv" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">📊 Exportar CSV</button>
+                    <button id="btn-clear-all" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">🗑️ Limpiar Todo</button>
+                    <button id="btn-close-admin" class="text-white hover:text-amber-400 text-2xl font-bold px-2">&times;</button>
                 </div>
             </div>
             <div class="p-6 overflow-y-auto" id="admin-content"><div class="text-center py-10 text-gray-500">Cargando resultados...</div></div>
@@ -84,7 +91,6 @@
     <header class="bg-slate-800 text-white p-3 md:p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-2">
         <div><h1 class="text-lg md:text-xl font-bold text-amber-400">PLANTA INTERACTIVA BPFA</h1><p class="text-xs text-gray-300 hidden sm:block">Módulo de Inspección de Instalaciones, Equipos y Materiales</p></div>
         <div class="flex gap-3">
-            <div class="bg-slate-700 px-3 py-1 rounded-lg text-center"><span class="text-xs text-gray-300">🎯 Ayudas</span><span id="help-counter" class="text-amber-400 font-bold text-lg block">2</span></div>
             <div class="bg-slate-700 px-3 py-1 rounded-lg"><span class="text-xs">Progreso: <span id="progress-text" class="text-amber-400">Escena 1 de 7</span></span></div>
         </div>
     </header>
@@ -94,7 +100,6 @@
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="bg-gray-200 px-3 py-2 flex justify-between items-center border-b">
                     <span class="font-bold text-sm" id="scene-title">Estación de Inspección</span>
-                    <button id="btn-help" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded">💡 Ayuda</button>
                 </div>
                 <div class="w-full overflow-x-auto overflow-y-hidden" id="scroll-wrapper">
                     <div class="relative w-full cursor-crosshair" id="image-viewport">
@@ -126,16 +131,18 @@
 
     <div id="report-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0 shadow">
+            <div class="bg-slate-800 text-white p-4 rounded-t-2xl flex justify-between sticky top-0 shadow z-10">
                 <div>
                     <h2 class="font-bold text-amber-400 text-lg">📝 REPORTE FINAL DE AUDITORÍA</h2>
                     <p id="report-student-name" class="text-xs text-gray-300"></p>
                 </div>
                 <button onclick="resetAppToRegistration()" class="text-white hover:text-amber-400 text-2xl transition-colors">&times;</button>
             </div>
-            <div class="p-5" id="report-content"></div>
-            <div class="p-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end gap-2">
-                <button onclick="window.print()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
+            <div class="p-5" id="print-area">
+                <div id="report-content"></div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end gap-2 sticky bottom-0">
+                <button id="btn-print-pdf" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
                     🖨️ Guardar Reporte en PDF
                 </button>
                 <button onclick="resetAppToRegistration()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md">
@@ -165,9 +172,11 @@
         }
 
         const RESULTS_COLLECTION = "auditoria_resultados";
-        const ADMIN_PASSWORD = "0514";
+        
+        // CONTRASEÑA NUMÉRICA CONFIGURADA
+        const ADMIN_PASSWORD = "12345"; 
 
-        // ==================== DATASET VERIFICADO CON TUS CAMBIOS MANUALES ====================
+        // ==================== DATASET VERIFICADO CON TUS CAMBIOS ====================
         const dataset = {
             1: { title: "Escena 1: Muelle de Ingreso", isClean: true, image: "assets/escena1.png", hotspots: [] },
             2: { title: "Escena 2: Pasillos de Almacenamiento A", isClean: false, image: "assets/escena2.png", hotspots: [
@@ -182,7 +191,7 @@
             4: { title: "Escena 4: Área de Dosificación y Pesaje", isClean: true, image: "assets/escena4.png", hotspots: [] },
             5: { title: "Escena 5: Infraestructura Alta (Techado)", isClean: false, image: "assets/escena5.png", hotspots: [
                 { id: "e5_p1", x: 20, y: 15, r: 13, label: "Gotera activa", q: "El techo presenta una gotera activa que moja la zona de almacenamiento. ¿Por qué esta condición de humedad compromete la calidad de la planta?" },
-                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" },
+                { id: "e5_p2", x: 74, y: 16, r: 13, label: "Luminaria expuesta sin cubierta", q: "Al no tener canastilla de protección la lámpara, ¿qué peligro corre la integridad física del producto si el bombillo estalla?" },
                 { id: "e5_p3", x: 50, y: 66, r: 13, label: "Paredes con manchas de humedad", q: "Paredes con manchas de humedad, moho y deterioro. Eso indica falta de mantenimiento y control de humedad. ¿Qué acción correctiva se debe de realizar para el cumplimiento de la normativa?" }
             ] },
             6: { title: "Escena 6: Área de Residuos / Zona de Desechos", isClean: false, image: "assets/escena6.png", hotspots: [
@@ -196,8 +205,7 @@
             ] }
         };
 
-        // MEJORA 2: Se reduce el límite inicial de ayudas disponibles a 2
-        let currentSceneId = 1, availableHelps = 2, studentName = "", isAdminAuthenticated = false;
+        let currentSceneId = 1, studentName = "", isAdminAuthenticated = false;
         let studentAnswers = {};
 
         // Captura de Elementos DOM
@@ -210,8 +218,6 @@
         const btnConforme = document.getElementById("btn-conforme");
         const btnNext = document.getElementById("btn-next");
         const btnFinish = document.getElementById("btn-finish");
-        const btnHelp = document.getElementById("btn-help");
-        const helpCounter = document.getElementById("help-counter");
         const imgViewport = document.getElementById("image-viewport");
         const mainContent = document.getElementById("main-content");
         const registrationModal = document.getElementById("registration-modal");
@@ -241,8 +247,6 @@
                     studentName: studentName,
                     timestamp: new Date().toISOString(),
                     fechaLegible: new Date().toLocaleString(),
-                    helpsUsed: 2 - availableHelps,
-                    totalHelps: 2,
                     answers: studentAnswers
                 });
                 showToast("✅ ¡Resultado guardado en la nube!");
@@ -279,8 +283,8 @@
                 document.getElementById("admin-content").innerHTML = '<div class="text-center py-10 text-slate-500">No hay registros aún o estás offline.</div>';
                 return;
             }
-            let html = `<div class="mb-4 p-3 bg-blue-50 rounded text-slate-700">📊 Total: ${results.length} auditorías registradas</div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead><tr class="bg-slate-100 text-slate-700"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Ayudas</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
-            results.forEach((r) => { html += `<tr class="border-b text-slate-600"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2">${r.helpsUsed}/2</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">Eliminar</button></td></tr>`; });
+            let html = `<div class="mb-4 p-3 bg-blue-50 rounded text-slate-700">📊 Total: ${results.length} auditorías registradas</div><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead><tr class="bg-slate-100 text-slate-700"><th class="p-2">Estudiante</th><th class="p-2">Fecha</th><th class="p-2">Acciones</th></tr></thead><tbody>`;
+            results.forEach((r) => { html += `<tr class="border-b text-slate-600"><td class="p-2 font-medium">${r.studentName || "Anónimo"}</td><td class="p-2 text-xs">${r.fechaLegible}</td><td class="p-2"><button onclick="viewResultDetail('${r.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver Detalle</button> <button onclick="deleteResult('${r.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs ml-1">🗑️</button></td></tr>`; });
             html += `</tbody></table></div>`;
             document.getElementById("admin-content").innerHTML = html;
         }
@@ -289,22 +293,22 @@
             try {
                 const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
                 const r = doc.data();
-                let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4">← Volver</button><div class="p-3 bg-amber-50 rounded mb-4 text-slate-800"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p><p>🎯 Ayudas usadas: ${r.helpsUsed}/2</p></div>`;
+                let html = `<button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1 rounded text-sm mb-4 font-bold">← Volver a la Lista</button><div class="p-3 bg-amber-50 rounded mb-4 text-slate-800"><p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p><p>📅 ${r.fechaLegible}</p></div>`;
                 for (let i = 1; i <= 7; i++) {
                     const scene = dataset[i];
                     const ans = r.answers[i] || { markedConforme: false, findings: {} };
-                    html += `<div class="border p-2 mb-2 rounded text-slate-700"><strong>${scene.title}</strong> - ${ans.markedConforme ? '✅ Conforme' : '⚠️ Con fallas'}<br>`;
+                    html += `<div class="border p-2 mb-2 rounded text-slate-700 bg-white shadow-sm"><strong>${scene.title}</strong> - ${ans.markedConforme ? '<span class="text-emerald-600 font-bold">✅ Conforme</span>' : '<span class="text-amber-600 font-bold">⚠️ Con fallas</span>'}<br>`;
                     if (!scene.isClean && !ans.markedConforme) {
-                        scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
+                        scene.hotspots.forEach(s => { html += `<div class="text-xs ml-2 mt-1 bg-slate-50 p-1.5 rounded border-l-2 border-red-500"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; });
                         if (i === 6 && ans.areaResiduosCorrecta) {
-                            html += `<div class="text-xs ml-2 mt-1 bg-slate-100 p-1 rounded font-medium">❓ ¿Área de residuos correcta?: <span class="text-blue-700 uppercase font-bold">${ans.areaResiduosCorrecta}</span><br>🗣️ Justificación: ${ans.areaResiduosJustificacion || 'Sin justificar'}</div>`;
+                            html += `<div class="text-xs ml-2 mt-1 bg-amber-50 p-1.5 rounded border border-amber-300 font-medium">❓ ¿Área de residuos correcta?: <span class="text-blue-700 uppercase font-bold">${ans.areaResiduosCorrecta}</span><br>🗣️ Justificación: ${ans.areaResiduosJustificacion || 'Sin justificar'}</div>`;
                         }
                     } else if (!scene.isClean && ans.markedConforme) {
-                        html += `<span class="text-rose-600 text-xs">❌ Error: El alumno omitió fallas de bioseguridad</span>`;
+                        html += `<span class="text-rose-600 text-xs font-bold">❌ Error: El alumno omitió fallas de bioseguridad</span>`;
                     } else if (scene.isClean && !ans.markedConforme) {
-                        html += `<span class="text-rose-600 text-xs">❌ Error: Reportó fallas inexistentes</span>`;
+                        html += `<span class="text-rose-600 text-xs font-bold">❌ Error: Reportó fallas inexistentes</span>`;
                     } else {
-                        html += `<span class="text-emerald-600 text-xs">✨ Correcto</span>`;
+                        html += `<span class="text-emerald-600 text-xs font-bold">✨ Correcto</span>`;
                     }
                     html += `</div>`;
                 }
@@ -339,7 +343,7 @@
         document.getElementById("btn-export-csv").onclick = async () => {
             const results = await loadResultsFromFirebase();
             if (!results.length) return;
-            let csv = "Estudiante,Fecha,Ayudas Usadas,Calificacion\n";
+            let csv = "Estudiante,Fecha,Calificacion\n";
             results.forEach(r => {
                 let score = 0;
                 for (let i = 1; i <= 7; i++) {
@@ -348,7 +352,7 @@
                     if (scene.isClean && ans.markedConforme) score++;
                     if (!scene.isClean && !ans.markedConforme && Object.keys(ans.findings).length === scene.hotspots.length) score++;
                 }
-                csv += `"${r.studentName || "Anonimo"}","${r.fechaLegible}",${r.helpsUsed},${score}/7\n`;
+                csv += `"${r.studentName || "Anonimo"}","${r.fechaLegible}",${score}/7\n`;
             });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
@@ -377,7 +381,6 @@
             registrationModal.classList.add("hidden");
             mainContent.classList.remove("hidden");
             mainContent.classList.add("grid");
-            updateHelpCounter();
             loadScene(1);
         };
 
@@ -388,54 +391,6 @@
                 btnFinish.classList.remove("hidden");
             } 
         }
-
-        function updateHelpCounter() {
-            helpCounter.textContent = availableHelps;
-            if (availableHelps === 0) { 
-                btnHelp.disabled = true;
-                btnHelp.classList.add("opacity-50"); 
-                btnHelp.textContent = "💔 Sin Ayudas"; 
-            } else { 
-                btnHelp.disabled = false;
-                btnHelp.classList.remove("opacity-50"); 
-                btnHelp.textContent = "💡 Ayuda";
-            }
-        }
-
-        btnHelp.onclick = function() {
-            if (availableHelps === 0) { alert("❌ No quedan ayudas disponibles."); return; }
-            
-            availableHelps--;
-            updateHelpCounter();
-
-            if (studentAnswers[currentSceneId]?.markedConforme) { 
-                alert("⚠️ Ya marcaste esta escena como conforme. (Ayuda consumida)"); 
-                return; 
-            }
-            
-            const scene = dataset[currentSceneId];
-            if (scene.isClean) { 
-                alert("✅ Esta escena está limpia y libre de fallas. (Ayuda consumida)"); 
-                return; 
-            }
-            
-            const currentFindings = studentAnswers[currentSceneId]?.findings || {};
-            const missing = scene.hotspots.filter(s => !currentFindings[s.id]);
-            if (missing.length === 0) { 
-                alert("🎉 Ya encontraste todas las fallas en este escenario. (Ayuda consumida)"); 
-                return; 
-            }
-            
-            const spot = missing[0];
-            const helpPin = document.createElement("div");
-            helpPin.className = "absolute bg-amber-400/60 border-2 border-amber-500 rounded-full w-11 h-11 flex items-center justify-center pointer-events-none z-40 animate-pulse";
-            helpPin.style.left = `${spot.x}%`; 
-            helpPin.style.top = `${spot.y}%`;
-            helpPin.innerHTML = `<span class="bg-amber-500 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm">?</span>`;
-            pinsOverlay.appendChild(helpPin);
-            alert(`💡 Comodín Utilizado\n\n📍 Hallazgo sugerido: ${spot.label}\n\nObserva la alerta parpadeante por unos segundos.`);
-            setTimeout(() => helpPin.remove(), 5000);
-        };
 
         function loadScene(id) {
             currentSceneId = id;
@@ -471,22 +426,23 @@
                 btnConforme.classList.add("opacity-40");
 
                 scene.hotspots.forEach(spot => {
-                    if (existing[spot.id]) {
+                    if (existing[spot.id] !== undefined) {
                         createPinAndTextarea(spot, existing[spot.id]);
                     }
                 });
                 
-                // Si es escena 6, renderizar de nuevo la pregunta extra guardada
-                if(id === 6) {
-                    renderEscena6ExtraQuestion();
-                }
-
+                if(id === 6) renderEscena6ExtraQuestion();
                 findingsCounter.textContent = `${Object.keys(existing).length} de ${scene.hotspots.length} fallas`;
                 checkSceneCompletion();
             }
         }
 
-        // Bloque de verificación de finalización de escena
+        function sandboxVibrate(duration) {
+            if (typeof window !== 'undefined' && window.navigator && typeof window.navigator.vibrate === 'function') {
+                window.navigator.vibrate(duration);
+            }
+        }
+
         function checkSceneCompletion() {
             const scene = dataset[currentSceneId];
             const ans = studentAnswers[currentSceneId];
@@ -494,7 +450,6 @@
             
             if (count === scene.hotspots.length) {
                 if (currentSceneId === 6) {
-                    // En la escena 6 requiere que además responda el Sí/No y escriba la justificación
                     if (ans.areaResiduosCorrecta !== "" && ans.areaResiduosJustificacion.trim() !== "") {
                         showNavButtons();
                     } else {
@@ -507,7 +462,6 @@
             }
         }
 
-        // MEJORA 1: Crear e insertar dinámicamente la pregunta especial de la Escena 6
         function renderEscena6ExtraQuestion() {
             if (document.getElementById("escena6-special-box")) return;
 
@@ -534,7 +488,6 @@
 
             questionsContainer.appendChild(specialBox);
 
-            // Escuchas de eventos para actualizar el objeto de datos
             const radios = specialBox.querySelectorAll('input[name="residuos-choice"]');
             radios.forEach(radio => {
                 radio.addEventListener("change", function() {
@@ -570,9 +523,7 @@
                 const count = Object.keys(studentAnswers[currentSceneId].findings).length;
                 findingsCounter.textContent = `${count} de ${dataset[currentSceneId].hotspots.length} fallas`;
                 
-                if (currentSceneId === 6) {
-                    renderEscena6ExtraQuestion();
-                }
+                if (currentSceneId === 6) renderEscena6ExtraQuestion();
                 checkSceneCompletion();
             });
         }
@@ -600,11 +551,8 @@
                 createPinAndTextarea(hit, "");
                 studentAnswers[currentSceneId].findings[hit.id] = "";
                 
-                if (currentSceneId === 6) {
-                    renderEscena6ExtraQuestion();
-                }
-
-                if (window.navigator?.vibrate) window.navigator.vibrate(55);
+                if (currentSceneId === 6) renderEscena6ExtraQuestion();
+                sandboxVibrate(55);
             }
         });
 
@@ -624,8 +572,7 @@
         function generateReportHTML() {
             let html = `<div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
                             <strong>👤 Estudiante:</strong> ${studentName}<br>
-                            📅 <strong>Fecha:</strong> ${new Date().toLocaleString()}<br>
-                            🎯 <strong>Ayudas utilizadas:</strong> ${2 - availableHelps} de 2
+                            📅 <strong>Fecha:</strong> ${new Date().toLocaleString()}
                         </div>
                         <div class="overflow-x-auto">
                         <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
@@ -641,9 +588,9 @@
                             <td class="p-3 text-center">${ans.markedConforme ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-bold">✅ Conforme</span>' : '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">⚠️ Fallas</span>'}</td>
                             <td class="p-3 text-slate-600">`;
                 if (scene.isClean) {
-                    html += ans.markedConforme ? '<span class="text-emerald-600">✨ Correcto</span>' : '<span class="text-rose-600">❌ Error: Reportó fallas inexistentes</span>';
+                    html += ans.markedConforme ? '<span class="text-emerald-600 font-medium">✨ Correcto</span>' : '<span class="text-rose-600 font-medium">❌ Error: Reportó fallas inexistentes</span>';
                 } else if (ans.markedConforme) {
-                    html += '<span class="text-rose-600">❌ Error grave: Omitió anomalías críticas</span>';
+                    html += '<span class="text-rose-600 font-medium">❌ Error grave: Omitió anomalías críticas</span>';
                 } else {
                     scene.hotspots.forEach(s => {
                         html += `<div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-500 shadow-sm">
@@ -652,7 +599,6 @@
                                 </div>`;
                     });
                     
-                    // Renderizar los datos de la pregunta extra en el reporte final del alumno
                     if (id === 6 && ans.areaResiduosCorrecta) {
                         html += `<div class="bg-amber-50/60 p-2 rounded border border-amber-200 mt-2">
                                     <strong class="text-slate-800 block text-xs">❓ ¿Es correcto que esta zona sea el área de almacenamiento de residuos?</strong>
@@ -674,6 +620,11 @@
             document.getElementById("report-student-name").innerHTML = `👤 Estudiante: ${studentName}`;
             document.getElementById("report-modal").classList.remove("hidden");
             document.getElementById("report-modal").style.display = "flex";
+            checkAdminButton();
+        };
+
+        document.getElementById("btn-print-pdf").onclick = function() {
+            window.print();
         };
 
         window.resetAppToRegistration = function() {
@@ -686,12 +637,9 @@
             
             studentName = "";
             studentNameInput.value = "";
-            availableHelps = 2; // Reinicia correctamente al nuevo límite de 2 ayudas
             currentSceneId = 1;
-            
             studentAnswers = {};
             
-            updateHelpCounter();
             registrationModal.classList.remove("hidden");
             showToast("🔄 Aplicación reiniciada para un nuevo intento");
         };
