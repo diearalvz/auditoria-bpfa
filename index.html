@@ -294,78 +294,127 @@
         const doc = await db.collection(RESULTS_COLLECTION).doc(id).get();
         const r = doc.data();
         
-        // Guardamos temporalmente los datos de la sesión actual del alumno para no perder el hilo
-        const tempName = studentName;
-        const tempAnswers = studentAnswers;
-        
-        // Asignamos momentáneamente los datos de este estudiante específico para generar su reporte HTML limpio
-        studentName = r.studentName || "Anónimo";
-        studentAnswers = r.answers;
-        const reportHTML = generateReportHTML();
-        
-        // Restauramos inmediatamente las variables globales de la sesión activa
-        studentName = tempName;
-        studentAnswers = tempAnswers;
+        // Creamos los datos locales del estudiante seleccionado para este reporte específico
+        const reportTargetName = r.studentName || "Anónimo";
+        const reportTargetAnswers = r.answers || {};
 
-        // Construimos el contenedor del detalle con el nuevo botón de descarga PDF incorporado
-        let html = `
+        // Generamos el HTML del reporte de forma aislada y explícita para evitar conflictos de variables
+        let reportHTML = `
+            <div class="p-4 bg-amber-50/70 border border-amber-200 rounded-xl mb-4 text-slate-800 shadow-sm">
+                <strong>👤 Estudiante:</strong> ${reportTargetName}<br>
+                📅 <strong>Fecha:</strong> ${r.fechaLegible || new Date().toLocaleString()}
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                    <thead>
+                        <tr class="bg-slate-800 text-white text-left">
+                            <th class="p-3">Escenario</th>
+                            <th class="p-3 text-center">Criterio</th>
+                            <th class="p-3">Sustentación</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        for (let i = 1; i <= 7; i++) {
+            const scene = dataset[i];
+            const ans = reportTargetAnswers[i] || { markedConforme: false, findings: {}, areaResiduosCorrecta: "", areaResiduosJustificacion: "" };
+            
+            reportHTML += `
+                <tr class="border-b hover:bg-gray-50 bg-white text-slate-700">
+                    <td class="p-3 font-semibold">${scene.title}</td>
+                    <td class="p-3 text-center">
+                        ${ans.markedConforme ? 
+                            '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-bold">✅ Conforme</span>' : 
+                            '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs font-bold">⚠️ Fallas</span>'}
+                    </td>
+                    <td class="p-3 text-slate-600">`;
+
+            if (scene.isClean) {
+                reportHTML += ans.markedConforme ?
+                    '<span class="text-emerald-600 font-medium">✨ Correcto</span>' : 
+                    '<span class="text-rose-600 font-medium">❌ Error: Reportó fallas inexistentes</span>';
+            } else if (ans.markedConforme) {
+                reportHTML += '<span class="text-rose-600 font-medium">❌ Error grave: Omitió anomalías críticas</span>';
+            } else {
+                scene.hotspots.forEach(s => {
+                    reportHTML += `
+                        <div class="bg-gray-50 p-2 mb-2 rounded border-l-4 border-red-500 shadow-sm">
+                            <strong class="text-slate-800 block text-xs">📍 ${s.label}</strong>
+                            <span class="text-gray-600 text-xs italic">"${ans.findings[s.id] || 'No respondido'}"</span>
+                        </div>`;
+                });
+                if (i === 6 && ans.areaResiduosCorrecta) {
+                    reportHTML += `
+                        <div class="bg-amber-50/60 p-2 rounded border border-amber-200 mt-2">
+                            <strong class="text-slate-800 block text-xs">❓ ¿Es correcto que esta zona sea el área de almacenamiento de residuos?</strong>
+                            <span class="text-xs uppercase font-bold text-blue-700">${ans.areaResiduosCorrecta}</span>
+                            <strong class="text-slate-800 block text-xs mt-1">🗣️ Justificación:</strong>
+                            <span class="text-gray-600 text-xs italic">"${ans.areaResiduosJustificacion || 'Sin responder'}"</span>
+                        </div>`;
+                }
+            }
+            reportHTML += `</td></tr>`;
+        }
+        reportHTML += `</tbody></table></div>`;
+
+        // Construimos la vista de la interfaz del Panel de Administración
+        let adminViewHTML = `
             <div class="flex flex-wrap gap-2 mb-4">
                 <button onclick="showAdminPanel()" class="bg-slate-600 text-white px-3 py-1.5 rounded text-sm font-bold shadow">← Volver a la Lista</button>
                 <button id="btn-print-single-pdf" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-bold shadow flex items-center gap-1">🖨️ Descargar PDF de este Estudiante</button>
             </div>
             <div class="p-3 bg-amber-50 rounded mb-4 text-slate-800">
-                <p><strong>👤 Estudiante: ${r.studentName || "Anónimo"}</strong></p>
-                <p>📅 ${r.fechaLegible}</p>
+                <p><strong>👤 Estudiante: ${reportTargetName}</strong></p>
+                <p>📅 ${r.fechaLegible || new Date().toLocaleString()}</p>
             </div>
             <div class="space-y-2">
         `;
         
-        // Mapeo y renderizado de las respuestas de las 7 escenas (conservando toda tu lógica original)
         for (let i = 1; i <= 7; i++) {
             const scene = dataset[i];
-            const ans = r.answers[i] || { markedConforme: false, findings: {} };
+            const ans = reportTargetAnswers[i] || { markedConforme: false, findings: {} };
             
-            html += `<div class="border p-2 rounded text-slate-700 bg-white shadow-sm"><strong>${scene.title}</strong> - ${ans.markedConforme ?
+            adminViewHTML += `<div class="border p-2 rounded text-slate-700 bg-white shadow-sm"><strong>${scene.title}</strong> - ${ans.markedConforme ?
                 '<span class="text-emerald-600 font-bold">✅ Conforme</span>' : '<span class="text-amber-600 font-bold">⚠️ Con fallas</span>'}<br>`;
             
             if (!scene.isClean && !ans.markedConforme) {
                 scene.hotspots.forEach(s => { 
-                    html += `<div class="text-xs ml-2 mt-1 bg-slate-50 p-1.5 rounded border-l-2 border-red-500"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; 
+                    adminViewHTML += `<div class="text-xs ml-2 mt-1 bg-slate-50 p-1.5 rounded border-l-2 border-red-500"><strong>📍 ${s.label}:</strong> ${ans.findings[s.id] || 'No respondido'}</div>`; 
                 });
                 if (i === 6 && ans.areaResiduosCorrecta) {
-                    html += `<div class="text-xs ml-2 mt-1 bg-amber-50 p-1.5 rounded border border-amber-300 font-medium">❓ ¿Área de residuos correcta?: <span class="text-blue-700 uppercase font-bold">${ans.areaResiduosCorrecta}</span><br>🗣️ Justificación: ${ans.areaResiduosJustificacion || 'Sin justificar'}</div>`;
+                    adminViewHTML += `<div class="text-xs ml-2 mt-1 bg-amber-50 p-1.5 rounded border border-amber-300 font-medium">❓ ¿Área de residuos correcta?: <span class="text-blue-700 uppercase font-bold">${ans.areaResiduosCorrecta}</span><br>🗣️ Justificación: ${ans.areaResiduosJustificacion || 'Sin justificar'}</div>`;
                 }
             } else if (!scene.isClean && ans.markedConforme) {
-                html += `<span class="text-rose-600 text-xs font-bold">❌ Error: El alumno omitió fallas de bioseguridad</span>`;
+                adminViewHTML += `<span class="text-rose-600 text-xs font-bold">❌ Error: El alumno omitió fallas de bioseguridad</span>`;
             } else if (scene.isClean && !ans.markedConforme) {
-                html += `<span class="text-rose-600 text-xs font-bold">❌ Error: Reportó fallas inexistentes</span>`;
+                adminViewHTML += `<span class="text-rose-600 text-xs font-bold">❌ Error: Reportó fallas inexistentes</span>`;
             } else {
-                html += `<span class="text-emerald-600 text-xs font-bold">✨ Correcto</span>`;
+                adminViewHTML += `<span class="text-emerald-600 text-xs font-bold">✨ Correcto</span>`;
             }
-            html += `</div>`;
+            adminViewHTML += `</div>`;
         }
-        html += `</div>`;
+        adminViewHTML += `</div>`;
         
-        // Inyectamos el diseño actualizado en el cuerpo del modal administrador
-        document.getElementById("admin-content").innerHTML = html;
+        // Inyectamos la interfaz en el modal del administrador
+        document.getElementById("admin-content").innerHTML = adminViewHTML;
         
-        // Configuramos la acción del botón para imprimir únicamente la ficha técnica generada
+        // Asignamos el evento de descarga en el PDF usando la estructura aislada
         document.getElementById("btn-print-single-pdf").onclick = function() {
             const printArea = document.getElementById("print-area");
             const originalContent = printArea.innerHTML;
             
-            // Colocamos el HTML limpio estructurado en la zona reservada de impresión
+            // Colocamos el reporte limpio generado
             printArea.innerHTML = reportHTML;
             
-            // Disparamos la ventana de guardado/impresión del sistema operativo
+            // Ejecutamos la impresión nativa del navegador
             window.print();
             
-            // Reestablecemos el área de impresión a su estado inicial para que la app continúe de manera normal
+            // Devolvemos el print-area a su estado original
             printArea.innerHTML = originalContent;
         };
 
     } catch(e) { 
-        console.error("Error al procesar el detalle del estudiante:", e);
+        console.error("Error al renderizar el detalle:", e);
         showToast("Error al cargar detalles", true); 
     }
 };
